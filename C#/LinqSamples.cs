@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using QuerySamples;
 using SampleSupport;
 
 // Version Mad01
@@ -2056,7 +2057,7 @@ namespace SampleQueries {
         }
 
         [Category("lab1")]
-        [Title("Zad 3.1.3 *")]
+        [Title("Zad 3.1.3 * + time(3.2.3)")]
         [Description("napisz zapytanie zwracające liczby pierwsze z zakresu od 1 do 888. " +
                      "wskazówka: użyj metody Enumerable.Range")]
         public void Linq_Lab1_zad313()
@@ -2075,12 +2076,15 @@ namespace SampleQueries {
                 return pFactor > squareRoot;
             };
 
-            var numbers =
+            Func<IEnumerable<int>> supplier = () =>
                 from n in Enumerable.Range(1, 888)
                 where isPrime(n)
                 select n;
 
-            ObjectDumper.Write(numbers);
+            var time = Benchmark.Ex(supplier, 10);
+            Console.WriteLine(@"time={0}{1}", time, Environment.NewLine);
+
+            ObjectDumper.Write(supplier());
         }
     }
 }

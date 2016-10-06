@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
+using QuerySamples;
 
 namespace SampleQueries {
     [Title("101+ Linq To Xml Query Samples")]
@@ -1990,13 +1991,13 @@ namespace SampleQueries {
         }
 
         [Category("lab1")]
-        [Title("Zad 3.1.2.2")]
+        [Title("Zad 3.1.2.2 + time(3.2.3)")]
         [Description("miasta wraz z liczbą klientów w kolejności malejącej")]
         public void XLinq_Lab1_Zad3122()
         {
             var doc = XDocument.Load(dataPath + "Customers.xml");
 
-            var result =
+            Func<IEnumerable> supplier = () =>
                 from customer in doc.Descendants("customer")
                 group customer by customer.Element("city")?.Value
                 into cityGroup
@@ -2008,7 +2009,10 @@ namespace SampleQueries {
                     Clients = count
                 };
 
-            ObjectDumper.Write(result);
+            var time = Benchmark.Ex(supplier, 10);
+            Console.WriteLine(@"time={0}{1}", time, Environment.NewLine);
+
+            ObjectDumper.Write(supplier());
         }
     }
 }
