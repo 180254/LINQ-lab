@@ -1991,7 +1991,13 @@ namespace SampleQueries {
         [Description("nazwy i ceny jednostkowe wszystkich produktów")]
         public void Linq_Lab1_Zad3111()
         {
-            Console.WriteLine(@"not implemented");
+            var products = GetProductList();
+
+            var result =
+                from prod in products
+                select new {prod.ProductName, prod.UnitPrice};
+
+            ObjectDumper.Write(result);
         }
 
         [Category("lab1")]
@@ -1999,7 +2005,14 @@ namespace SampleQueries {
         [Description("nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood")]
         public void Linq_Lab1_Zad3112()
         {
-            Console.WriteLine(@"not implemented");
+            var products = GetProductList();
+
+            var result =
+                from prod in products
+                where prod.UnitsInStock > 0 && prod.UnitPrice < 10 && prod.Category == "Seafood"
+                select prod.ProductName;
+
+            ObjectDumper.Write(result);
         }
 
         [Category("lab1")]
@@ -2007,7 +2020,19 @@ namespace SampleQueries {
         [Description("produkty, których cena jednostkowa, jest równa cenie produktu o nazwie Ikura")]
         public void Linq_Lab1_Zad3113()
         {
-            Console.WriteLine(@"not implemented");
+            var products = GetProductList();
+
+            var ikuraPrices =
+                from prod in products
+                where prod.ProductName == "Ikura"
+                select prod.UnitPrice;
+
+            var result =
+                from prod in products
+                where ikuraPrices.Contains(prod.UnitPrice)
+                select prod.ProductName;
+
+            ObjectDumper.Write(result);
         }
 
         [Category("lab1")]
@@ -2015,7 +2040,19 @@ namespace SampleQueries {
         [Description("średnią cenę produktu w każdej kategorii (użyj group by)")]
         public void Linq_Lab1_Zad3114()
         {
-            Console.WriteLine(@"not implemented");
+            var products = GetProductList();
+
+            var result =
+                from prod in products
+                group prod by prod.Category
+                into prodGroup
+                select new
+                {
+                    Category = prodGroup.Key,
+                    AvgUnitPrice = Math.Round(prodGroup.Average(p => p.UnitPrice), 4)
+                };
+
+            ObjectDumper.Write(result);
         }
 
         [Category("lab1")]
@@ -2024,7 +2061,26 @@ namespace SampleQueries {
                      "wskazówka: użyj metody Enumerable.Range")]
         public void Linq_Lab1_zad313()
         {
-            Console.WriteLine(@"not implemented");
+            // http://www.cs.uwc.ac.za/~jconnan/FirstYear/checkprime.txt
+            Func<int, bool> isPrime = n =>
+            {
+                var pFactor = 2;
+                var squareRoot = Math.Sqrt(n);
+
+                while ((pFactor <= squareRoot) && (n%pFactor != 0))
+                {
+                    pFactor++;
+                }
+
+                return pFactor > squareRoot;
+            };
+
+            var numbers =
+                from n in Enumerable.Range(1, 888)
+                where isPrime(n)
+                select n;
+
+            ObjectDumper.Write(numbers);
         }
     }
 }
