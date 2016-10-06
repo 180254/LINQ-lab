@@ -1974,7 +1974,19 @@ namespace SampleQueries {
         [Description("nazwy i miasta klientów nie posiadających nr faksu")]
         public void XLinq_Lab1_Zad3121()
         {
-            Console.WriteLine(@"not implemented");
+            var doc = XDocument.Load(dataPath + "Customers.xml");
+
+            var result =
+                from customer in doc.Descendants("customer")
+                let fax = customer.Element("fax")
+                where fax == null || fax.IsEmpty
+                select new
+                {
+                    Name = customer.Element("name")?.Value,
+                    City = customer.Element("city")?.Value,
+                };
+
+            ObjectDumper.Write(result);
         }
 
         [Category("lab1")]
@@ -1982,7 +1994,21 @@ namespace SampleQueries {
         [Description("miasta wraz z liczbą klientów w kolejności malejącej")]
         public void XLinq_Lab1_Zad3122()
         {
-            Console.WriteLine(@"not implemented");
+            var doc = XDocument.Load(dataPath + "Customers.xml");
+
+            var result =
+                from customer in doc.Descendants("customer")
+                group customer by customer.Element("city")?.Value
+                into cityGroup
+                let count = cityGroup.Count()
+                orderby count descending
+                select new
+                {
+                    City = cityGroup.Key,
+                    Clients = count
+                };
+
+            ObjectDumper.Write(result);
         }
     }
 }
