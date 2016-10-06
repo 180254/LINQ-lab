@@ -1983,5 +1983,48 @@ namespace SampleQueries {
                         .ToArray() } )
                 .ToList();
         }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        [Category("lab1")]
+        [Title("Zad 3.1.1.1")]
+        [Description("nazwy i ceny jednostkowe wszystkich produktów")]
+        public void Linq_Lab1_Zad3111()
+        {
+            Console.WriteLine(@"not implemented");
+        }
+
+        [Category("lab1")]
+        [Title("Zad 3.1.1.2")]
+        [Description("nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood")]
+        public void Linq_Lab1_Zad3112()
+        {
+            Console.WriteLine(@"not implemented");
+        }
+
+        [Category("lab1")]
+        [Title("Zad 3.1.1.3")]
+        [Description("produkty, których cena jednostkowa, jest równa cenie produktu o nazwie Ikura")]
+        public void Linq_Lab1_Zad3113()
+        {
+            Console.WriteLine(@"not implemented");
+        }
+
+        [Category("lab1")]
+        [Title("Zad 3.1.1.4")]
+        [Description("średnią cenę produktu w każdej kategorii (użyj group by)")]
+        public void Linq_Lab1_Zad3114()
+        {
+            Console.WriteLine(@"not implemented");
+        }
+
+        [Category("lab1")]
+        [Title("Zad 3.1.3 *")]
+        [Description("napisz zapytanie zwracające liczby pierwsze z zakresu od 1 do 888. " +
+                     "wskazówka: użyj metody Enumerable.Range")]
+        public void Linq_Lab1_zad313()
+        {
+            Console.WriteLine(@"not implemented");
+        }
     }
 }

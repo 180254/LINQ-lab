@@ -1965,5 +1965,24 @@ namespace SampleQueries {
             Console.WriteLine("Orders Log:");
             Console.WriteLine(log.ToString());
         }
+
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        [Category("lab1")]
+        [Title("Zad 3.1.2.1")]
+        [Description("nazwy i miasta klientów nie posiadających nr faksu")]
+        public void XLinq_Lab1_Zad3121()
+        {
+            Console.WriteLine(@"not implemented");
+        }
+
+        [Category("lab1")]
+        [Title("Zad 3.1.2.2")]
+        [Description("miasta wraz z liczbą klientów w kolejności malejącej")]
+        public void XLinq_Lab1_Zad3122()
+        {
+            Console.WriteLine(@"not implemented");
+        }
     }
 }
