@@ -2095,5 +2095,68 @@ namespace SampleQueries {
 
             ObjectDumper.Write(supplier());
         }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.1 (1)")]
+        [Description(
+             "Znaleźć nazwy produketów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood.")]
+        public void Linq_Lab2_zad321()
+        {
+        }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.2 (1)")]
+        [Description(
+             "Dla każdej kategorii znaleźć najtańsze i najdroższe produkty. Zwrócić nazwy kategorii i nazwy produktów. " +
+             "* Napisz zapytanie o złożoności lepszej niż O(k*log(k)*n*n."
+         )]
+        public void Linq_Lab2_zad322()
+        {
+        }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.3 (1)")]
+        [Description(
+             "Znaleźć cenę, dla której jest najwięcej sztuk produktów (biorąć pod uwagę też unitInStocks). " +
+             "Zwrócić cenę i liczbę sztuk."
+         )]
+        public void Linq_Lab2_zad323()
+        {
+        }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.4 (1)")]
+        [Description(
+             "Dla każdego produktu podać liczbę produktów, które są od niego tańsze lub jest ich mniej na składzie.")]
+        public void Linq_Lab2_zad324()
+        {
+        }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.5 (1)")]
+        [Description(
+             "Dla każdego produktu podaj liczbę produktów, które kosztują tyle samo. " +
+             "* Napisz zapytanie o złożoności O(n*log(n))."
+         )]
+        public void Linq_Lab2_zad325()
+        {
+        }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.6 (1)")]
+        [Description("Do rozwiązań zastosuj Parallel LINQ i sprawdź poprawę wydajności.")]
+        public void Linq_Lab2_zad326()
+        {
+        }
+
+        [Category("lab2")]
+        [Title("Zad 3.2.7 (1)")]
+        [Description(
+             "Sprawdź wydajność zapytania z wykładu i poprzedzających laboratoriów: " +
+             "produkty, których cena jednostkowa jest równa cenie produktu o nazwie Ikura. Spróbuj ją poprawić."
+         )]
+        public void Linq_Lab2_zad327()
+        {
+        }
     }
 }
