@@ -13,6 +13,7 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using QuerySamples;
 using SampleSupport;
+using LINQTest;
 
 // Version Mad01
 
@@ -49,6 +50,7 @@ namespace SampleQueries {
             public decimal Total { get; set; }
         }
 
+        /* Product.cs
         public class Product
         {
             public int ProductID { get; set; } 
@@ -57,6 +59,7 @@ namespace SampleQueries {
             public decimal UnitPrice { get; set; }
             public int UnitsInStock { get; set; }
         }
+        */
 
         public class Supplier
         {
@@ -115,7 +118,7 @@ namespace SampleQueries {
 
             var expensiveInStockProducts =
                 from prod in products
-                where prod.UnitsInStock > 0 && prod.UnitPrice > 3.00M
+                where prod.UnitsInStock > 0 && prod.UnitPrice > 3.00
                 select prod;
             
             Console.WriteLine("In-stock products that cost more than 3.00:");
@@ -1845,6 +1848,12 @@ namespace SampleQueries {
 
         private void createLists() {
             // Product data created in-memory using collection initializer:
+
+            ICollection<Product> productsCollection = new List<Product>();
+            Data.fillProducts(ref productsCollection);
+            productList = productList = (List<Product>) productsCollection;
+
+            /* Data.cs
             productList =
                 new List<Product> {
                     new Product { ProductID = 1, ProductName = "Chai", Category = "Beverages", UnitPrice = 18.0000M, UnitsInStock = 39 },
@@ -1925,7 +1934,7 @@ namespace SampleQueries {
                     new Product { ProductID = 76, ProductName = "Lakkalikööri", Category = "Beverages", UnitPrice = 18.0000M, UnitsInStock = 57 },
                     new Product { ProductID = 77, ProductName = "Original Frankfurter grüne Soße", Category = "Condiments", UnitPrice = 13.0000M, UnitsInStock = 32 }
                 };
-
+            */
             supplierList = new List<Supplier>(){
                     new Supplier {SupplierName = "Exotic Liquids", Address = "49 Gilbert St.", City = "London", Country = "UK"},
                     new Supplier {SupplierName = "New Orleans Cajun Delights", Address = "P.O. Box 78934", City = "New Orleans", Country = "USA"},
