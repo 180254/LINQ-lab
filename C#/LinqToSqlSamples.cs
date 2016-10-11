@@ -28,8 +28,7 @@ namespace SampleQueries {
     public class LinqToSqlSamples : SampleHarness {
         
         private readonly static string dbPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\Data\NORTHWND.MDF"));
-        private readonly static string sqlServerInstance = @".\SQLEXPRESS";
-        private readonly static string connString = "AttachDBFileName='" + dbPath + "';Server='" + sqlServerInstance + "';user instance=true;Integrated Security=SSPI;Connection Timeout=60";
+        private readonly static string connString = @"Server=(LocalDB)\v11.0;Integrated Security=true;AttachDBFileName='" + dbPath + "'";
 
         private Northwind db;
 
@@ -3806,6 +3805,61 @@ namespace SampleQueries {
         public class Name {
             public string FirstName;
             public string LastName;
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        [Category("lab2")]
+        [Title("Zad 3.1.1")]
+        [Description("Podaj pełne dane dostawcy, który produkuje produkt Ikura")]
+        public void LinqToSql_Lab2_Zad311()
+        {
+            var result =
+                from p in db.Products
+                where p.ProductName == "Ikura"
+                select p.Supplier;
+
+            ObjectDumper.Write(result);
+        }
+
+
+        [Category("lab2")]
+        [Title("Zad 3.1.2")]
+        [Description("Podaj nazwy klientów, którzy zamawiali produkt Ikura")]
+        public void LinqToSql_Lab2_Zad312()
+        {
+            var result =
+                from o in db.OrderDetails
+                where o.Product.ProductName == "Ikura"
+                group o by o.Order.Customer.CompanyName
+                into companies
+                select companies.Key;
+
+            ObjectDumper.Write(result);
+        }
+
+
+        [Category("lab2")]
+        [Title("Zad 3.1.3 (*)")]
+        [Description(
+             "Wymyśl zapytanie odnoszące się przynajmniej do czterech tabel wykorzystujące grupowanie. Nie korzystaj z operatora join.\n" +
+             "Podaj id dostawców, którzy dostarczyli produkty zamówione przez klienta 'Seven Seas Imports'"
+         )]
+        public void LinqToSql_Lab2_Zad313()
+        {
+            var result =
+                db.Customers
+                    .Where(c => c.CompanyName == "Seven Seas Imports")
+                    .SelectMany(
+                        c => c.Orders.SelectMany(
+                            o => o.OrderDetails.Select(
+                                od => od.Product.Supplier.CompanyName
+                            )
+                        )
+                    )
+                    .Distinct();
+
+            ObjectDumper.Write(result);
         }
     }
 }
