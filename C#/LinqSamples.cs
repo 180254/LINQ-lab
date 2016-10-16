@@ -2099,9 +2099,27 @@ namespace SampleQueries {
         [Category("lab2")]
         [Title("Zad 3.2.1 (1)")]
         [Description(
-             "Znaleźć nazwy produketów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood.")]
+             "Znaleźć nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood.")]
         public void Linq_Lab2_zad321()
         {
+            Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
+                from p in products
+                where p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood"
+                select p.ProductName;
+
+            Func<IList<Product>, Func<IEnumerable<string>>> method2 = (products) => () =>
+                from p in products
+                where p.UnitsInStock > 0
+                where p.UnitPrice < 10
+                where p.Category == "Seafood"
+                select p.ProductName;
+
+            Func<IList<Product>, Func<IEnumerable<string>>> method3 = (products) => () =>
+                products
+                    .Where(p => p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood")
+                    .Select(p => p.ProductName);
+
+            Benchmark.DecreasingTest(GetProductList(), method1, method2, method3);
         }
 
         [Category("lab2")]

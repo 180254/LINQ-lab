@@ -1997,7 +1997,7 @@ namespace SampleQueries {
         {
             var doc = XDocument.Load(dataPath + "Customers.xml");
 
-            Func<IEnumerable> supplier = () =>
+            Func<IEnumerable<object>> supplier = () =>
                 from customer in doc.Descendants("customer")
                 group customer by customer.Element("city")?.Value
                 into cityGroup
@@ -2009,10 +2009,10 @@ namespace SampleQueries {
                     Clients = count
                 };
 
-            var time = Benchmark.Ex(supplier, 10);
-            Console.WriteLine(@"time={0}{1}", time, Environment.NewLine);
+            var bResult = Benchmark.Ex(supplier, 10);
 
-            ObjectDumper.Write(supplier());
+            Console.WriteLine(@"time={0}{1}", bResult.Time, Environment.NewLine);
+            ObjectDumper.Write(bResult.Value);
         }
     }
 }
