@@ -9,16 +9,17 @@ namespace QuerySamples
 
     internal class Benchmark
     {
+        // ReSharper disable once InconsistentNaming
         public static readonly bool DEBUG = true;
 
         // ----------------------------------------------------------------------------------------------------------
 
         internal class Result<T>
         {
-            public IEnumerable<T> Value { get; }
+            public IList<T> Value { get; }
             public TimeSpan Time { get; }
 
-            public Result(IEnumerable<T> value, TimeSpan time)
+            public Result(IList<T> value, TimeSpan time)
             {
                 Value = value;
                 Time = time;
@@ -30,7 +31,7 @@ namespace QuerySamples
         public static Result<T> Ex<T>(Func<IEnumerable<T>> expr)
         {
             var stopwatch = Stopwatch.StartNew();
-            var result = expr.Invoke();
+            var result = expr.Invoke().ToList();
             stopwatch.Stop();
 
             if (DEBUG)
