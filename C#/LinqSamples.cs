@@ -14,6 +14,8 @@ using System.Xml.Linq;
 using QuerySamples;
 using SampleSupport;
 using LINQTest;
+using Mapped;
+using Product = LINQTest.Product;
 
 // Version Mad01
 
@@ -2085,7 +2087,7 @@ namespace SampleQueries {
                 return pFactor > squareRoot;
             };
 
-            IEnumerable<int> primes =
+            var primes =
                 from n in Enumerable.Range(1, 888)
                 where isPrime(n)
                 select n;
@@ -2099,34 +2101,118 @@ namespace SampleQueries {
              "Znaleźć nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood.")]
         public void Linq_Lab2_zad321()
         {
-            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
+            Func<IList<Product>, IEnumerable<string>> method0 = (products) =>
                 from p in products
                 where p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood"
                 select p.ProductName;
 
-            Func<IList<Product>, IEnumerable<string>> method2 = (products) =>
+            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
                 from p in products
                 where p.UnitsInStock > 0
                 where p.UnitPrice < 10
                 where p.Category == "Seafood"
                 select p.ProductName;
 
-            Func<IList<Product>, IEnumerable<string>> method3 = (products) =>
+            Func<IList<Product>, IEnumerable<string>> method2 = (products) =>
                 products
                     .Where(p => p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood")
                     .Select(p => p.ProductName);
 
-            Benchmark.DecreasingTest(GetProductList(), method1, method2, method3);
+            Benchmark.DecreasingTest(GetProductList(), method0, method1, method2);
         }
 
         [Category("lab2")]
         [Title("Zad 3.2.2")]
         [Description(
              "Dla każdej kategorii znaleźć najtańsze i najdroższe produkty. Zwrócić nazwy kategorii i nazwy produktów. " +
-             "* Napisz zapytanie o złożoności lepszej niż O(k*log(k)*n*n."
+             "* Napisz zapytanie o złożoności lepszej niż O(k*log(k)*n*n)."
          )]
         public void Linq_Lab2_zad322()
         {
+            // pierwszy pomysł
+            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+                products.GroupBy(p => p.Category).Select(c =>
+                    new
+                    {
+                        Category = c.Key,
+                        CheapestProduct = c.OrderBy(k => k.UnitPrice).First().ProductName,
+                        MostExpensiveProduct = c.OrderByDescending(k => k.UnitPrice).First().ProductName
+                    });
+
+            // method0 z uniknięciem podwójnego sortowania
+            Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
+                products.GroupBy(p => p.Category)
+                    .Select(c =>
+                        new
+                        {
+                            Category = c.Key,
+                            OrderedProducts = c.OrderBy(k => k.UnitPrice)
+                        })
+                    .Select(o =>
+                        new
+                        {
+                            o.Category,
+                            CheapestProduct = o.OrderedProducts.First().ProductName,
+                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                        });
+
+            // method1 z materializacją OrderedProducts
+            Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
+                products.GroupBy(p => p.Category)
+                    .Select(c =>
+                        new
+                        {
+                            Category = c.Key,
+                            OrderedProducts = c.OrderBy(k => k.UnitPrice).ToList()
+                        })
+                    .Select(o =>
+                        new
+                        {
+                            o.Category,
+                            CheapestProduct = o.OrderedProducts.First().ProductName,
+                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                        });
+
+            // method2 z AsParallel
+            Func<IList<Product>, IEnumerable<object>> method3 = (products) =>
+                products.GroupBy(p => p.Category)
+                    .AsParallel()
+                    .Select(c =>
+                        new
+                        {
+                            Category = c.Key,
+                            OrderedProducts = c.OrderBy(k => k.UnitPrice).ToList()
+                        })
+                    .Select(o =>
+                        new
+                        {
+                            o.Category,
+                            CheapestProduct = o.OrderedProducts.First().ProductName,
+                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                        });
+
+            // wersja bez GroupBy
+            Func<IList<Product>, IEnumerable<object>> method4 = (products) =>
+            {
+                var categories = products.Select(p => p.Category).Distinct();
+
+                return categories
+                    .Select(c =>
+                        new
+                        {
+                            Category = c,
+                            OrderedProducts = products.Where(p => p.Category == c).OrderBy(p => p.UnitPrice).ToList()
+                        })
+                    .Select(o =>
+                        new
+                        {
+                            o.Category,
+                            CheapestProduct = o.OrderedProducts.First().ProductName,
+                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                        });
+            };
+
+            Benchmark.DecreasingTest(GetProductList(), method0, method1, method2, method3, method4);
         }
 
         [Category("lab2")]
@@ -2137,6 +2223,19 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad323()
         {
+            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+                products
+                    .GroupBy(p => p.UnitPrice)
+                    .Select(o =>
+                        new
+                        {
+                            UnitPrice = o.Key,
+                            Units = o.Select(p => p.UnitsInStock).Sum()
+                        })
+                    .OrderByDescending(o => o.Units)
+                    .Take(1);
+
+            Benchmark.DecreasingTest(GetProductList(), method0);
         }
 
         [Category("lab2")]
@@ -2145,6 +2244,24 @@ namespace SampleQueries {
              "Dla każdego produktu podać liczbę produktów, które są od niego tańsze lub jest ich mniej na składzie.")]
         public void Linq_Lab2_zad324()
         {
+            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+                products.Select(p =>
+                    new
+                    {
+                        Product = p.ProductName,
+                        SpecCounter = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
+                    });
+
+            // method0 z AsParallel
+            Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
+                products.AsParallel().Select(p =>
+                    new
+                    {
+                        Product = p.ProductName,
+                        SpecCounter = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
+                    });
+
+            Benchmark.DecreasingTest(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]
@@ -2155,6 +2272,38 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad325()
         {
+            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+            {
+                var ordered = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
+
+                Func<int, int> samePrice = (index) =>
+                {
+                    var price = ordered[index].UnitPrice;
+                    var counter = 0;
+
+                    for (var k = index;
+                        k >= 0 && Math.Abs(ordered[k].UnitPrice - price) < 0.0001;
+                        k--, counter++) ;
+
+
+                    for (var k = index + 1;
+                        k < ordered.Count && Math.Abs(ordered[k].UnitPrice - price) < 0.0001;
+                        k++, counter++) ;
+
+                    return counter;
+                };
+
+                return products
+                    .Select( // n
+                        (prod, index) =>
+                            new
+                            {
+                                Product = prod.ProductName,
+                                SpecCounter = samePrice(index) //  n
+                            });
+            };
+
+            Benchmark.DecreasingTest(GetProductList(), method0);
         }
 
         [Category("lab2")]
