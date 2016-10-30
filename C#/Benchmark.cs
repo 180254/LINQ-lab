@@ -24,14 +24,20 @@ namespace QuerySamples
                 Value = value;
                 Time = time;
             }
+
+            public void Describe()
+            {
+                Console.WriteLine(@"time={0}{1}", Time, Environment.NewLine);
+                ObjectDumper.Write(Value);
+            }
         }
 
         // ----------------------------------------------------------------------------------------------------------
 
-        public static Result<T> Ex<T>(Func<IEnumerable<T>> expr)
+        public static Result<T> Ex<T>(IEnumerable<T> expr)
         {
             var stopwatch = Stopwatch.StartNew();
-            var result = expr.Invoke().ToList();
+            var result = expr.ToList();
             stopwatch.Stop();
 
             if (DEBUG)
@@ -45,11 +51,11 @@ namespace QuerySamples
 
         // ----------------------------------a------------------------------------------------------------------------
 
-        public static Result<T> Ex<T>(Func<IEnumerable<T>> expr, int repeats)
+        public static Result<T> Ex<T>(IEnumerable<T> expr, int repeats)
         {
-            if (repeats < 3)
+            if (DEBUG)
             {
-                return Ex(expr);
+                Console.WriteLine(@"debug.Benchmark.Ex");
             }
 
             var times =
@@ -58,23 +64,20 @@ namespace QuerySamples
                 orderby ex.Time.Ticks
                 select ex;
 
-            return times.Skip(repeats/2 - 1).First();
+            return times.Skip(Math.Max(0, repeats/2 - 1)).First();
         }
 
         // ----------------------------------------------------------------------------------------------------------
 
-        public static bool Unanimity<TA, TB>(Func<IEnumerable<TA>> expr1, Func<IEnumerable<TB>> expr2)
+        public static bool Unanimity<TA, TB>(IEnumerable<TA> expr1, IEnumerable<TB> expr2)
         {
             if (typeof(TA) != typeof(TB))
             {
                 return false;
             }
 
-            var result1 = expr1.Invoke();
-            var result2 = expr2.Invoke();
-
-            var list1 = result1 as IList<TA> ?? result1.ToList();
-            var list2 = (IList<TA>) (result2 as IList<TB> ?? result2.ToList());
+            var list1 = expr1 as IList<TA> ?? expr1.ToList();
+            var list2 = (IList<TA>) (expr2 as IList<TB> ?? expr2.ToList());
 
             return
                 list1.Count() == list2.Count()
@@ -87,7 +90,7 @@ namespace QuerySamples
 
         public static void DecreasingTest<TSource, TResult>(
             ICollection<TSource> testCollection,
-            params Func<IList<TSource>, Func<IEnumerable<TResult>>>[] expr)
+            params Func<IList<TSource>, IEnumerable<TResult>>[] expr)
         {
             var collSizes = new List<int>();
             var exprTimes = new List<TimeSpan>[expr.Length];
@@ -117,8 +120,8 @@ namespace QuerySamples
                 {
                     var iCopy = i;
                     unaminity &= Unanimity(
-                        () => exprResult[0].Value,
-                        () => exprResult[iCopy].Value
+                        exprResult[0].Value,
+                        exprResult[iCopy].Value
                     );
                 }
                 exprUnanimities.Add(unaminity);
@@ -130,10 +133,12 @@ namespace QuerySamples
             // ------------------------------------------------------------
 
             Console.WriteLine(@"sizes: {0}", string.Join(", ", collSizes));
+
             for (var i = 0; i < expr.Length; i++)
             {
                 Console.WriteLine(@"expr[{0}]-times: {1}", i, string.Join(", ", exprTimes[i].Select(t => t.Ticks)));
             }
+
             Console.WriteLine(@"unanimities: {0}", exprUnanimities.All(u => u));
         }
     }

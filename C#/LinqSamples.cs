@@ -2085,36 +2085,33 @@ namespace SampleQueries {
                 return pFactor > squareRoot;
             };
 
-            Func<IEnumerable<int>> supplier = () =>
+            IEnumerable<int> primes =
                 from n in Enumerable.Range(1, 888)
                 where isPrime(n)
                 select n;
 
-            var time = Benchmark.Ex(supplier, 10);
-            Console.WriteLine(@"time={0}{1}", time, Environment.NewLine);
-
-            ObjectDumper.Write(supplier());
+            Benchmark.Ex(primes, 10).Describe();
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.1 (1)")]
+        [Title("Zad 3.2.1")]
         [Description(
              "Znaleźć nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood.")]
         public void Linq_Lab2_zad321()
         {
-            Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
+            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
                 from p in products
                 where p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood"
                 select p.ProductName;
 
-            Func<IList<Product>, Func<IEnumerable<string>>> method2 = (products) => () =>
+            Func<IList<Product>, IEnumerable<string>> method2 = (products) =>
                 from p in products
                 where p.UnitsInStock > 0
                 where p.UnitPrice < 10
                 where p.Category == "Seafood"
                 select p.ProductName;
 
-            Func<IList<Product>, Func<IEnumerable<string>>> method3 = (products) => () =>
+            Func<IList<Product>, IEnumerable<string>> method3 = (products) =>
                 products
                     .Where(p => p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood")
                     .Select(p => p.ProductName);
@@ -2123,7 +2120,7 @@ namespace SampleQueries {
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.2 (1)")]
+        [Title("Zad 3.2.2")]
         [Description(
              "Dla każdej kategorii znaleźć najtańsze i najdroższe produkty. Zwrócić nazwy kategorii i nazwy produktów. " +
              "* Napisz zapytanie o złożoności lepszej niż O(k*log(k)*n*n."
@@ -2133,7 +2130,7 @@ namespace SampleQueries {
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.3 (1)")]
+        [Title("Zad 3.2.3")]
         [Description(
              "Znaleźć cenę, dla której jest najwięcej sztuk produktów (biorąć pod uwagę też unitInStocks). " +
              "Zwrócić cenę i liczbę sztuk."
@@ -2143,7 +2140,7 @@ namespace SampleQueries {
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.4 (1)")]
+        [Title("Zad 3.2.4")]
         [Description(
              "Dla każdego produktu podać liczbę produktów, które są od niego tańsze lub jest ich mniej na składzie.")]
         public void Linq_Lab2_zad324()
@@ -2151,7 +2148,7 @@ namespace SampleQueries {
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.5 (1)")]
+        [Title("Zad 3.2.5")]
         [Description(
              "Dla każdego produktu podaj liczbę produktów, które kosztują tyle samo. " +
              "* Napisz zapytanie o złożoności O(n*log(n))."
@@ -2161,14 +2158,14 @@ namespace SampleQueries {
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.6 (1)")]
+        [Title("Zad 3.2.6")]
         [Description("Do rozwiązań zastosuj Parallel LINQ i sprawdź poprawę wydajności.")]
         public void Linq_Lab2_zad326()
         {
         }
 
         [Category("lab2")]
-        [Title("Zad 3.2.7 (1)")]
+        [Title("Zad 3.2.7")]
         [Description(
              "Sprawdź wydajność zapytania z wykładu i poprzedzających laboratoriów: " +
              "produkty, których cena jednostkowa jest równa cenie produktu o nazwie Ikura. Spróbuj ją poprawić."

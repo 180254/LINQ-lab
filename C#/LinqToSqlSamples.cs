@@ -21,6 +21,7 @@ using System.Data.Linq.Mapping;
 using System.Reflection;
 using System.Data.Linq.SqlClient;
 using System.Xml.Linq;
+using QuerySamples;
 
 namespace SampleQueries {
     [Title("101+ Linq To Sql Query Samples")]
@@ -3840,14 +3841,14 @@ namespace SampleQueries {
 
 
         [Category("lab2")]
-        [Title("Zad 3.1.3 (*)")]
+        [Title("Zad 3.1.3 (*) + time(3.2.3)")]
         [Description(
              "Wymyśl zapytanie odnoszące się przynajmniej do czterech tabel wykorzystujące grupowanie. Nie korzystaj z operatora join.\n" +
-             "Podaj id dostawców, którzy dostarczyli produkty zamówione przez klienta 'Seven Seas Imports'"
+             "Podaj nazwy dostawców, którzy dostarczyli produkty zamówione przez klienta 'Seven Seas Imports'"
          )]
         public void LinqToSql_Lab2_Zad313()
         {
-            var result =
+            IEnumerable<string> suppliers =
                 db.Customers
                     .Where(c => c.CompanyName == "Seven Seas Imports")
                     .SelectMany(
@@ -3859,7 +3860,7 @@ namespace SampleQueries {
                     )
                     .Distinct();
 
-            ObjectDumper.Write(result);
+            Benchmark.Ex(suppliers, 10).Describe();
         }
     }
 }
