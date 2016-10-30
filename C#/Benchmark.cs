@@ -9,8 +9,8 @@ namespace QuerySamples
 
     internal class Benchmark
     {
-        // ReSharper disable once InconsistentNaming
-        public static readonly bool DEBUG = true;
+        public static bool Debug = false; /* Ex param. print info about each iteration */
+        public static int DescMode = 1; /* DecreasingTest param. 0=None, 1=First, 2=Each */
 
         // ----------------------------------------------------------------------------------------------------------
 
@@ -27,8 +27,9 @@ namespace QuerySamples
 
             public void Describe()
             {
-                Console.WriteLine(@"time={0}{1}", Time, Environment.NewLine);
+                Console.WriteLine(@"time={0}", Time);
                 ObjectDumper.Write(Value);
+                Console.WriteLine();
             }
         }
 
@@ -40,7 +41,7 @@ namespace QuerySamples
             var result = expr.ToList();
             stopwatch.Stop();
 
-            if (DEBUG)
+            if (Debug)
             {
                 Console.WriteLine(@"debug.Benchmark.Ex={0} | {1}",
                     stopwatch.Elapsed.Ticks, stopwatch.Elapsed);
@@ -53,7 +54,7 @@ namespace QuerySamples
 
         public static Result<T> Ex<T>(IEnumerable<T> expr, int repeats)
         {
-            if (DEBUG)
+            if (Debug)
             {
                 Console.WriteLine(@"debug.Benchmark.Ex");
             }
@@ -81,9 +82,9 @@ namespace QuerySamples
 
             return
                 list1.Count() == list2.Count()
-                // && list1.All(value => list2.Contains(value))
-                // && list2.All(value => list1.Contains(value))
-                && list1.SequenceEqual(list2);
+                && list1.All(value => list2.Contains(value))
+                && list2.All(value => list1.Contains(value));
+                // && list1.SequenceEqual(list2);
         }
 
         // ----------------------------------------------------------------------------------------------------------
@@ -113,6 +114,12 @@ namespace QuerySamples
                 {
                     exprResult[i] = Ex(expr[i](test), 3);
                     exprTimes[i].Add(exprResult[i].Time);
+
+                    if ((DescMode == 1 && i == 0 && test.Count == testCollection.Count)
+                        || (DescMode == 2 && test.Count == testCollection.Count))
+                    {
+                        exprResult[i].Describe();
+                    }
                 }
 
                 var unaminity = true;
