@@ -2035,9 +2035,9 @@ namespace SampleQueries {
             var products = GetProductList();
 
             var ikuraPrices =
-                from prod in products
+                (from prod in products
                 where prod.ProductName == "Ikura"
-                select prod.UnitPrice;
+                select prod.UnitPrice).ToList();
 
             var result =
                 from prod in products
@@ -2308,7 +2308,7 @@ namespace SampleQueries {
                     return counter;
                 };
 
-                return products
+                return prodOrdered
                     .Select( // n
                         (prod, index) =>
                             new
@@ -2336,6 +2336,28 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad327()
         {
+            Func<IList<Product>, IEnumerable<string>> method0 = (products) =>
+                from prod in products
+                where (from prod2 in products
+                    where prod2.ProductName == "Ikura"
+                    select prod2.UnitPrice).Contains(prod.UnitPrice)
+                select prod.ProductName;
+
+            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
+            {
+                var ikuraPrices =
+                    from prod in products
+                    where prod.ProductName == "Ikura"
+                    select prod.UnitPrice;
+
+                var ikuraPricesList = ikuraPrices.ToList();
+
+                return from prod in products
+                    where ikuraPricesList.Contains(prod.UnitPrice)
+                    select prod.ProductName;
+            };
+
+            Benchmark.ExMulti(GetProductList(), method0, method1);
         }
     }
 }
