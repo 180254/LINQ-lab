@@ -90,6 +90,7 @@
     <Compile Include="NorthwindExtended.cs" />
     <Compile Include="NorthwindMapped.cs" />
     <Compile Include="ObjectDumper.cs" />
+    <Compile Include="ObjectReferenceEquality.cs" />
     <Compile Include="Product.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

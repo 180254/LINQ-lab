@@ -2271,7 +2271,34 @@ namespace SampleQueries {
                             SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
                         });
 
-            Benchmark.ExMulti(GetProductList(), method0, method1);
+            Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
+            {
+                var prodOrdered0 = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
+                var prodOrdered1 = products.OrderBy(p => p.UnitsInStock).ToList(); // n*log(n)
+
+                var prodComparer0 = Comparer<Product>.Create((a, b) => a.UnitPrice.CompareTo(b.UnitPrice));
+                var prodComparer1 = Comparer<Product>.Create((a, b) => a.UnitsInStock.CompareTo(b.UnitsInStock));
+
+                var prodEqComparer = new ObjectReferenceEqualityComparer<Product>();
+
+                Func<Product, int> specCount = (product) =>
+                {
+                    var prodMatch0 = prodOrdered0.Take(prodOrdered0.BinarySearch(product, prodComparer0)); // log(n)
+                    var prodMatch1 = prodOrdered1.Take(prodOrdered1.BinarySearch(product, prodComparer1)); // log(n)
+
+                    var arr2Set = new HashSet<Product>(prodMatch0, prodEqComparer);
+                    return arr2Set.Count + prodMatch1.Count(x => arr2Set.Add(x)); // O(n) :(
+                };
+
+                return products
+                    .Select(p => new
+                    {
+                        Products = p.ProductName,
+                        SpecCnt = specCount(p)
+                    });
+            };
+
+            Benchmark.ExMulti(GetProductList(), method0, method1, method2);
         }
 
         [Category("lab2")]
