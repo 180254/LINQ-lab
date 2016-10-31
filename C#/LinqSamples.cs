@@ -2119,7 +2119,7 @@ namespace SampleQueries {
                     .Where(p => p.Category == "Seafood")
                     .Select(p => p.ProductName);
 
-            Benchmark.DecreasingTest(GetProductList(), method0, method1);
+            Benchmark.ExMulti(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]
@@ -2218,7 +2218,7 @@ namespace SampleQueries {
                         });
             };
 
-            Benchmark.DecreasingTest(GetProductList(), method0, method1, method2, method3, method4);
+            Benchmark.ExMulti(GetProductList(), method0, method1, method2, method3, method4);
         }
 
         [Category("lab2")]
@@ -2241,7 +2241,7 @@ namespace SampleQueries {
                     .OrderByDescending(o => o.Units)
                     .Take(1);
 
-            Benchmark.DecreasingTest(GetProductList(), method0);
+            Benchmark.ExMulti(GetProductList(), method0);
         }
 
         [Category("lab2")]
@@ -2271,7 +2271,7 @@ namespace SampleQueries {
                             SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
                         });
 
-            Benchmark.DecreasingTest(GetProductList(), method0, method1);
+            Benchmark.ExMulti(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]
@@ -2318,7 +2318,7 @@ namespace SampleQueries {
                             });
             };
 
-            Benchmark.DecreasingTest(GetProductList(), method0);
+            Benchmark.ExMulti(GetProductList(), method0);
         }
 
         [Category("lab2")]

@@ -9,8 +9,17 @@ namespace QuerySamples
 
     internal class Benchmark
     {
-        public static bool Debug = false; /* Ex param. print info about each iteration */
-        public static int DescMode = 1; /* DecreasingTest param. 0=None, 1=First, 2=Each */
+        /* Ex param: print info about each iteration */
+        public static bool ExDebug = false;
+
+        /* ExMulti param: how many repeats do? */
+        public static int EmRepeats = 1;
+
+        /* ExMulti param: do decreasing (true) or only base collection size (false)? */
+        public static bool EmDecreasing = false;
+
+        /* ExMulti param: which method should be described? 0=None, 1=First, 2=Each */
+        public static int EmDescMode = 1;
 
         // ----------------------------------------------------------------------------------------------------------
 
@@ -41,7 +50,7 @@ namespace QuerySamples
             var result = expr.ToList();
             stopwatch.Stop();
 
-            if (Debug)
+            if (ExDebug)
             {
                 Console.WriteLine(@"debug.Benchmark.Ex={0} | {1}",
                     stopwatch.Elapsed.Ticks, stopwatch.Elapsed);
@@ -54,7 +63,7 @@ namespace QuerySamples
 
         public static Result<T> Ex<T>(IEnumerable<T> expr, int repeats)
         {
-            if (Debug)
+            if (ExDebug)
             {
                 Console.WriteLine(@"debug.Benchmark.Ex");
             }
@@ -84,16 +93,16 @@ namespace QuerySamples
                 list1.Count() == list2.Count()
                 && list1.All(value => list2.Contains(value))
                 && list2.All(value => list1.Contains(value));
-                // && list1.SequenceEqual(list2);
+            // && list1.SequenceEqual(list2);
         }
 
         // ----------------------------------------------------------------------------------------------------------
 
-        public static void DecreasingTest<TSource, TResult>(
+        public static void ExMulti<TSource, TResult>(
             ICollection<TSource> testCollection,
             params Func<IList<TSource>, IEnumerable<TResult>>[] expr)
         {
-            var collSizes = new List<int>();
+            var collectionSizes = new List<int>();
             var exprTimes = new List<TimeSpan>[expr.Length];
             var exprUnanimities = new List<bool>();
 
@@ -112,11 +121,11 @@ namespace QuerySamples
 
                 for (var i = 0; i < expr.Length; i++)
                 {
-                    exprResult[i] = Ex(expr[i](test), 3);
+                    exprResult[i] = Ex(expr[i](test), EmRepeats);
                     exprTimes[i].Add(exprResult[i].Time);
 
-                    if ((DescMode == 1 && i == 0 && test.Count == testCollection.Count)
-                        || (DescMode == 2 && test.Count == testCollection.Count))
+                    if ((EmDescMode == 1 && i == 0 && test.Count == testCollection.Count)
+                        || (EmDescMode == 2 && test.Count == testCollection.Count))
                     {
                         exprResult[i].Describe();
                     }
@@ -125,21 +134,23 @@ namespace QuerySamples
                 var unaminity = true;
                 for (var i = 1; i < expr.Length && unaminity; i++)
                 {
-                    var iCopy = i;
                     unaminity &= Unanimity(
                         exprResult[0].Value,
-                        exprResult[iCopy].Value
+                        exprResult[i].Value
                     );
                 }
-                exprUnanimities.Add(unaminity);
 
-                collSizes.Add(test.Count);
-                test = test.Where((c, i) => i%2 == 0).ToList();
+                exprUnanimities.Add(unaminity);
+                collectionSizes.Add(test.Count);
+
+                test = EmDecreasing
+                    ? test.Where((c, i) => i%2 == 0).ToList()
+                    : new List<TSource>();
             }
 
             // ------------------------------------------------------------
 
-            Console.WriteLine(@"sizes: {0}", string.Join(", ", collSizes));
+            Console.WriteLine(@"sizes: {0}", string.Join(", ", collectionSizes));
 
             for (var i = 0; i < expr.Length; i++)
             {
