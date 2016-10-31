@@ -2284,22 +2284,27 @@ namespace SampleQueries {
 
                 Func<Product, int> specCount = (product) =>
                 {
-                    var prodMatch0 = prodOrdered0.Take(prodOrdered0.BinarySearch(product, prodComparer0)); // log(n)
-                    var prodMatch1 = prodOrdered1.Take(prodOrdered1.BinarySearch(product, prodComparer1)); // log(n)
+                    // zle! produkt poprzedni moze miec cene taka sama, nie koniecznie nizsza
+                    var prodMatch0 = prodOrdered0.Take(prodOrdered0.BinarySearch(product, prodComparer0)); // n?+log(n)
+                    var prodMatch1 = prodOrdered1.Take(prodOrdered1.BinarySearch(product, prodComparer1)); // n?+log(n)
 
-                    var arr2Set = new HashSet<Product>(prodMatch0, prodEqComparer);
-                    return arr2Set.Count + prodMatch1.Count(x => arr2Set.Add(x)); // O(n) :(
+                    return Enumerable.Union(
+                        prodMatch0, 
+                        prodMatch1,
+                        prodEqComparer
+                        // ojojojjooj
+                    ).Count(o => o.UnitPrice < product.UnitPrice || o.UnitsInStock < product.UnitsInStock);
                 };
 
                 return products
                     .Select(p => new
                     {
-                        Products = p.ProductName,
+                        Product = p.ProductName,
                         SpecCnt = specCount(p)
                     });
             };
 
-            Benchmark.ExMulti(GetProductList(), method0, method1, method2);
+            Benchmark.ExMulti(GetProductList(), method0, method1/*, method2*/);
         }
 
         [Category("lab2")]
