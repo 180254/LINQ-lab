@@ -2070,7 +2070,8 @@ namespace SampleQueries {
         [Category("lab1")]
         [Title("Zad 3.1.3 * + time(3.2.3)")]
         [Description("napisz zapytanie zwracające liczby pierwsze z zakresu od 1 do 888. " +
-                     "wskazówka: użyj metody Enumerable.Range")]
+                     "wskazówka: użyj metody Enumerable.Range"
+         )]
         public void Linq_Lab1_zad313()
         {
             // http://www.cs.uwc.ac.za/~jconnan/FirstYear/checkprime.txt
@@ -2098,27 +2099,27 @@ namespace SampleQueries {
         [Category("lab2")]
         [Title("Zad 3.2.1")]
         [Description(
-             "Znaleźć nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood.")]
+             "Znaleźć nazwy produktów, które są na stanie, kosztują mniej niż 10 i należą do kategorii Seafood."
+         )]
         public void Linq_Lab2_zad321()
         {
             Func<IList<Product>, IEnumerable<string>> method0 = (products) =>
-                from p in products
-                where p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood"
-                select p.ProductName;
-
-            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
-                from p in products
-                where p.UnitsInStock > 0
-                where p.UnitPrice < 10
-                where p.Category == "Seafood"
-                select p.ProductName;
-
-            Func<IList<Product>, IEnumerable<string>> method2 = (products) =>
                 products
-                    .Where(p => p.UnitsInStock > 0 && p.UnitPrice < 10 && p.Category == "Seafood")
+                    .Where(
+                        p => p.UnitsInStock > 0
+                             && p.UnitPrice < 10
+                             && p.Category == "Seafood"
+                    )
                     .Select(p => p.ProductName);
 
-            Benchmark.DecreasingTest(GetProductList(), method0, method1, method2);
+            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
+                products
+                    .Where(p => p.UnitsInStock > 0)
+                    .Where(p => p.UnitPrice < 10)
+                    .Where(p => p.Category == "Seafood")
+                    .Select(p => p.ProductName);
+
+            Benchmark.DecreasingTest(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]
@@ -2131,17 +2132,20 @@ namespace SampleQueries {
         {
             // pierwszy pomysł
             Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
-                products.GroupBy(p => p.Category).Select(c =>
-                    new
-                    {
-                        Category = c.Key,
-                        CheapestProduct = c.OrderBy(k => k.UnitPrice).First().ProductName,
-                        MostExpensiveProduct = c.OrderByDescending(k => k.UnitPrice).First().ProductName
-                    });
+                products
+                    .GroupBy(p => p.Category)
+                    .Select(c =>
+                        new
+                        {
+                            Category = c.Key,
+                            CheapestProduct = c.OrderBy(k => k.UnitPrice).First().ProductName,
+                            MostExpensiveProduct = c.OrderByDescending(k => k.UnitPrice).First().ProductName
+                        });
 
             // method0 z uniknięciem podwójnego sortowania
             Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
-                products.GroupBy(p => p.Category)
+                products
+                    .GroupBy(p => p.Category)
                     .Select(c =>
                         new
                         {
@@ -2158,7 +2162,8 @@ namespace SampleQueries {
 
             // method1 z materializacją OrderedProducts
             Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
-                products.GroupBy(p => p.Category)
+                products
+                    .GroupBy(p => p.Category)
                     .Select(c =>
                         new
                         {
@@ -2175,7 +2180,8 @@ namespace SampleQueries {
 
             // method2 z AsParallel
             Func<IList<Product>, IEnumerable<object>> method3 = (products) =>
-                products.GroupBy(p => p.Category)
+                products
+                    .GroupBy(p => p.Category)
                     .AsParallel()
                     .Select(c =>
                         new
@@ -2241,25 +2247,29 @@ namespace SampleQueries {
         [Category("lab2")]
         [Title("Zad 3.2.4")]
         [Description(
-             "Dla każdego produktu podać liczbę produktów, które są od niego tańsze lub jest ich mniej na składzie.")]
+             "Dla każdego produktu podać liczbę produktów, które są od niego tańsze lub jest ich mniej na składzie."
+         )]
         public void Linq_Lab2_zad324()
         {
             Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
-                products.Select(p =>
-                    new
-                    {
-                        Product = p.ProductName,
-                        SpecCounter = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
-                    });
+                products
+                    .Select(p =>
+                        new
+                        {
+                            Product = p.ProductName,
+                            SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
+                        });
 
             // method0 z AsParallel
             Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
-                products.AsParallel().Select(p =>
-                    new
-                    {
-                        Product = p.ProductName,
-                        SpecCounter = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
-                    });
+                products
+                    .AsParallel()
+                    .Select(p =>
+                        new
+                        {
+                            Product = p.ProductName,
+                            SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
+                        });
 
             Benchmark.DecreasingTest(GetProductList(), method0, method1);
         }
@@ -2274,21 +2284,26 @@ namespace SampleQueries {
         {
             Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
             {
-                var ordered = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
+                var prodOrdered = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
 
-                Func<int, int> samePrice = (index) =>
+                Func<int, int> samePrice = (prodIndex) =>
                 {
-                    var price = ordered[index].UnitPrice;
+                    var price = prodOrdered[prodIndex].UnitPrice;
                     var counter = 0;
 
-                    for (var k = index;
-                        k >= 0 && Math.Abs(ordered[k].UnitPrice - price) < 0.0001;
-                        k--, counter++) ;
+                    var k = prodIndex;
+                    while (k >= 0 && Math.Abs(prodOrdered[k].UnitPrice - price) < 0.0001)
+                    {
+                        counter++;
+                        k--;
+                    }
 
-
-                    for (var k = index + 1;
-                        k < ordered.Count && Math.Abs(ordered[k].UnitPrice - price) < 0.0001;
-                        k++, counter++) ;
+                    k = prodIndex + 1;
+                    while (k < prodOrdered.Count && Math.Abs(prodOrdered[k].UnitPrice - price) < 0.0001)
+                    {
+                        counter++;
+                        k++;
+                    }
 
                     return counter;
                 };
@@ -2299,7 +2314,7 @@ namespace SampleQueries {
                             new
                             {
                                 Product = prod.ProductName,
-                                SpecCounter = samePrice(index) //  n
+                                SpecCnt = samePrice(index) //  n? + (one-time-calc) n*log(n)
                             });
             };
 
