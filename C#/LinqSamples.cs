@@ -2236,7 +2236,7 @@ namespace SampleQueries {
                         new
                         {
                             UnitPrice = o.Key,
-                            Units = o.Select(p => p.UnitsInStock).Sum()
+                            Units = o.Sum(p => p.UnitsInStock)
                         })
                     .OrderByDescending(o => o.Units)
                     .Take(1);
@@ -2271,6 +2271,7 @@ namespace SampleQueries {
                             SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
                         });
 
+            // niezbyt udana proba n*log(n)
             Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
             {
                 var prodOrdered0 = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
@@ -2310,6 +2311,15 @@ namespace SampleQueries {
         public void Linq_Lab2_zad325()
         {
             Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+                products
+                    .Select(p =>
+                        new
+                        {
+                            Product = p.ProductName,
+                            SpecCnt = products.Count(o => Math.Abs(o.UnitPrice - p.UnitPrice) < 0.0001)
+                        });
+
+            Func <IList<Product>, IEnumerable<object>> method1 = (products) =>
             {
                 var prodOrdered = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
 
@@ -2345,7 +2355,7 @@ namespace SampleQueries {
                             });
             };
 
-            Benchmark.ExMulti(GetProductList(), method0);
+            Benchmark.ExMulti(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]
