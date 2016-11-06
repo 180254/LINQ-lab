@@ -2391,6 +2391,11 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad325()
         {
+            /**
+             * 0. wersja (bazowa).
+             * - Typowe n^2.
+             * Zmierzony czas: 2569,4958ms
+             */
             Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .Select(p =>
@@ -2400,6 +2405,15 @@ namespace SampleQueries {
                             SpecCnt = products.Count(o => Math.Abs(o.UnitPrice - p.UnitPrice) < 0.0001)
                         });
 
+            /**
+             * 1 wersja.
+             * - Złożoność: O(n*log(n)+n*k) - gdzie k liczba produktów o tej samej cenie
+             * - Złożoność typowa: O(n*log(n)+n) - dla małej liczby produktów o tej samej cenie.
+             * Zgodność wyniku z wersją bazową.
+             * Brak zgodności semantycznej z wersją bazową(!):
+             * - Wynik częsciowo zostaje wcześniej zmaterializowany.
+             * Zmierzony czas: 13,1354ms
+             */
             Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
             {
                 var prodOrdered = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
