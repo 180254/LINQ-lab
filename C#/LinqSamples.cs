@@ -2179,8 +2179,8 @@ namespace SampleQueries {
              * 1. wersja.
              * - Produkty grupowane po kategorii.
              * - Produkty są posortowane raz, zamiast dwóch.
-              * Wady:
-              * - jak w wersji bazowej
+             * Wady:
+             * - jak w wersji bazowej
              * Semantyczna zgodność z wersją bazową.
              * Zmierzony czas: 4,9614ms
              */
@@ -2227,8 +2227,8 @@ namespace SampleQueries {
             /**
              * 3. wersja.
              * - Grupowanie zrobione samodzielnie, bez użycia metody GroupBy.
-              * Wady:
-              * - jak w wersji bazowej
+             * Wady:
+             * - jak w wersji bazowej
              * Semantyczna zgodność z wersją bazową zależy od implementacji:
              * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
              * - pełna zgodność semantyczna z wersją 2-gą
@@ -2262,6 +2262,14 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad323()
         {
+            /**
+             * 0. wersja (bazowa).
+             * - Policzone sumy sztuk produktów dla każdej ceny.
+             * - Wyniki posortowane i pobrany pierwszy wynik.
+             * Wady:
+             * - znajduje jeden wynik, potencjalnie może być więcej identycznych wyników (tyle samo sztuk)
+             * Zmierzony czas:
+             */
             Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
                 products
                     .GroupBy(p => p.UnitPrice)
@@ -2273,8 +2281,32 @@ namespace SampleQueries {
                         })
                     .OrderByDescending(o => o.Units)
                     .Take(1);
+            /**
+             * 1. wersja.
+             * - Policzone sumy sztuk produktów dla każdej ceny.
+             * - Przejście liniowe i wyszukanie najlepszego wyniku.
+             * Wady:
+             * - jak w wersji bazowej
+             * Zgodność wyniku z wersją bazową zależy od implementacji:
+             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
+             * Brak zgodności semantycznej:
+             * - Wynik zostaje wcześniej zmaterializowany, każde wywołanie poda ten sam rezultat.
+             * Zmierzony czas:
+             */
+            Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
+                Enumerable.Repeat(
+                    products
+                        .GroupBy(p => p.UnitPrice)
+                        .Select(o =>
+                            new
+                            {
+                                UnitPrice = o.Key,
+                                Units = o.Sum(p => p.UnitsInStock)
+                            })
+                        .Aggregate((a, b) => a.Units >= b.Units ? a : b)
+                    , 1);
 
-            Benchmark.ExMulti(GetProductList(), method0);
+            Benchmark.ExMulti(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]

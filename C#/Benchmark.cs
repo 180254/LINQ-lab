@@ -19,7 +19,7 @@ namespace QuerySamples
         public static bool EmDecreasing = false;
 
         /* ExMulti param: which method should be described? 0=None, 1=First, 2=Each */
-        public static int EmDescMode = 0;
+        public static int EmDescMode = 1;
 
         // ----------------------------------------------------------------------------------------------------------
 
