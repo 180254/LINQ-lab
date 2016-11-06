@@ -2167,7 +2167,7 @@ namespace SampleQueries {
               * - Produkty grupowane po kategorii.
               * - Podwójne sortowanie w celu znalezienia najtańszego (1-wsze) i najdroższego produktu (2-gie).
               * Wady:
-              * - znajduje jeden produkt, potencjalnie może być więcej produktów o takie cenie.
+              * - znajduje jeden produkt, potencjalnie może być więcej produktów o takiej samej cenie.
               * Zmierzony czas: 10,8809ms
               * Zmierzony czas (Parallel): 6,1188ms
               */
@@ -2188,7 +2188,7 @@ namespace SampleQueries {
              * - Produkty grupowane po kategorii.
              * - Produkty są posortowane raz, zamiast dwóch.
              * Wady:
-             * - jak w wersji bazowej
+             * - jak w wersji bazowej.
              * Semantyczna zgodność z wersją bazową.
              * Zmierzony czas: 4,9614ms
              * Zmierzony czas (Parallel): 3,405ms
@@ -2216,9 +2216,9 @@ namespace SampleQueries {
              * - Produkty grupowane po kategorii.
              * - Zamiast sortowania dwa razy przejście O(n).
              * Wady:
-             * - jak w wersji bazowej
+             * - jak w wersji bazowej.
              * Semantyczna zgodność z wersją bazową zależy od implementacji:
-             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
+             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne.
              * Zmierzony czas: 1,4007ms
              * Zmierzony czas (Parallel): 1,4345ms
              */
@@ -2240,8 +2240,8 @@ namespace SampleQueries {
              * Wady:
              * - jak w wersji bazowej
              * Semantyczna zgodność z wersją bazową zależy od implementacji:
-             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
-             * - pełna zgodność semantyczna z wersją 2-gą
+             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne,
+             * - pełna zgodność semantyczna z wersją 2-gą.
              * Zmierzony czas: 3,3472ms
              * Zmierzony czas (Parallel): 2,2844ms
              */
@@ -2280,7 +2280,7 @@ namespace SampleQueries {
              * - Policzone sumy sztuk produktów dla każdej ceny.
              * - Wyniki posortowane i pobrany pierwszy wynik.
              * Wady:
-             * - znajduje jeden wynik, potencjalnie może być więcej identycznych wyników (tyle samo sztuk)
+             * - znajduje jeden wynik, potencjalnie może być więcej identycznych wyników (tyle samo sztuk).
              * Zmierzony czas: 5,1308ms
              * Zmierzony czas (Parallel): 6,9503ms
              */
@@ -2301,9 +2301,9 @@ namespace SampleQueries {
              * - Policzone sumy sztuk produktów dla każdej ceny.
              * - Przejście liniowe i wyszukanie najlepszego wyniku.
              * Wady:
-             * - jak w wersji bazowej
+             * - jak w wersji bazowej.
              * Zgodność wyniku z wersją bazową zależy od implementacji:
-             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
+             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne.
              * Brak zgodności semantycznej (!):
              * - Wynik zostaje wcześniej zmaterializowany, każde wywołanie poda ten sam rezultat.
              * - Cały koszt zostaje przeniesiony na wywołanie funkcji budującej zapytanie.
@@ -2353,10 +2353,10 @@ namespace SampleQueries {
             /**
              *  1. Wersja.
              *  - Niezbyt udana próba osiągnięcia efektywnego n*log(n)).
-             *  - Osiągnięta złożoność pesymistyczna O(2*n*log(n)+n*(n+log(n)+n) = O(n*log(n)+n^2*log(n))
-             *  - Efektywna złożoność zalezy od liczby produktów spełniających założenia.
-             *  - Takich produktów jest dużo, więc właściwie jest ona zbliżona do pesymistycznej.
-             *  - Bida, bida, bida.
+             *  - Osiągnięta złożoność O(2*n*log(n)+n*2*(k+log(n)) = O(4*n*log(n)+2*n*k+2*log(n)).
+             *  - n = liczba produktów. k = liczba produktów spełniająca założenia.
+             *  - Efektywna złożoność zalezy od liczby produktów spełniających założenia (k).
+             *  - Bida, bida, bida. Takich produktów jest dużo.
              *  - Kierunek okazał się być niezbyt dobrym.
              * Zgodność wyniku z wersją bazową.
              * Brak zgodności semantycznej z wersją bazową(!):
@@ -2386,7 +2386,7 @@ namespace SampleQueries {
                         prodMatch1,
                         prodEqComparer
                         // wymagane dodatkowe warunki gdyż (*)
-                    ).Count(o => o.UnitPrice < product.UnitPrice || o.UnitsInStock < product.UnitsInStock); // n
+                    ).Count(o => o.UnitPrice < product.UnitPrice || o.UnitsInStock < product.UnitsInStock); // k
                 };
 
                 return products
@@ -2395,7 +2395,7 @@ namespace SampleQueries {
                     .Select(p => new // n*
                     {
                         Product = p.ProductName,
-                        SpecCnt = specCount(p) // n+log(n)
+                        SpecCnt = specCount(p) // 2*(k+log(n))
                     });
             };
 
@@ -2429,7 +2429,7 @@ namespace SampleQueries {
             /**
              * 1 wersja.
              * - Złożoność: O(n*log(n)+n*k) - gdzie k liczba produktów o tej samej cenie
-             * - Złożoność typowa: O(n*log(n)+n) - dla małej liczby produktów o tej samej cenie.
+             * - Złożoność typowa: O(n*log(n)) - dla małej liczby produktów o tej samej cenie.
              * Zgodność wyniku z wersją bazową.
              * Brak zgodności semantycznej z wersją bazową(!):
              * - Wynik częsciowo zostaje wcześniej zmaterializowany.
@@ -2481,6 +2481,7 @@ namespace SampleQueries {
         [Description("Do rozwiązań zastosuj Parallel LINQ i sprawdź poprawę wydajności.")]
         public void Linq_Lab2_zad326()
         {
+            // Zysk pochodzący z zrównoleglenia należy zweryfikować.
             // Zrównoleglenie nie zawsze przynosi wymierny zysk, czasami wręcz startę.
             // Koszty operacji zrównoleglenia, zmiany kontekstów, i łączenia wyników mogą być zbyt duże.
         }
@@ -2495,6 +2496,7 @@ namespace SampleQueries {
         {
             /**
              * 0. wersja (bazowa).
+             * - n^2 z wewnętrznym zapytaniem.
              * Zmierzony czas: 2264,7479ms
              */
             Func<IList<Product>, Func<IEnumerable<string>>> method0 = (products) => () =>
@@ -2506,6 +2508,10 @@ namespace SampleQueries {
 
             /**
              * 1. wersja.
+             * - 2*n
+             * - Pierwszy obieg poszukuje ceny produktu o nazwie Ikura.
+             * - Drugi szuka produktów i takiej samej cenie.
+             * - Zgodność wyników, brak zgodności semantycznej (koszt Ikura zmaterializowany).
              * Zmierzony czas: 0,6073ms
              */
             Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
