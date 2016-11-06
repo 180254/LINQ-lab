@@ -7,6 +7,7 @@
 using System;
 using System.Collections;   
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -2529,6 +2530,201 @@ namespace SampleQueries {
             };
 
             Benchmark.ExMulti(GetProductList(), method0, method1);
+        }
+
+        [Category("lab9")]
+        [Title("Zad 9.1.1")]
+        [Description(
+             "Tuning niezależnego pod zapytania"
+         )]
+        public void Linq_Lab9_zad911()
+        {
+            // Czas: 2596,0409ms
+            // Metoda bazowa, do której będę porównywał zgodność semantyczną.
+            Func<IList<Product>, Func<IEnumerable<string>>> wMethod0 = (products) => () =>
+                products
+                    .Where(p => products.Max(p2 => p2.UnitPrice) == p.UnitPrice)
+                    .Select(p => p.ProductName);
+
+            // Czas: 0,4405ms
+            // Metoda z wykładu.
+            Func<IList<Product>, Func<IEnumerable<string>>> wMethod1 = (products) => () =>
+            {
+                var nestedMaxPrice = products.Max(p2 => p2.UnitPrice);
+                return products
+                    .Where(p => nestedMaxPrice == p.UnitPrice)
+                    .Select(p => p.ProductName);
+            };
+
+            // Czas: 0,4212ms
+            // Metoda z wykładu.
+            Func<IList<Product>, Func<IEnumerable<string>>> wMethod2 = (products) => () =>
+            {
+                var nestedMaxPrice = products.Max(p2 => p2.UnitPrice);
+                return products
+                    .Where(p => nestedMaxPrice == p.UnitPrice)
+                    .Select(p => p.ProductName)
+                    .ToList();
+            };
+
+            // Czas: 0,6223ms
+            // Metoda z wykładu.
+            Func<IList<Product>, Func<IEnumerable<string>>> wMethod3 = (products) => () =>
+            {
+                Func<double> maxPriceFunc = () => products.Max(p2 => p2.UnitPrice);
+                var maxPriceThunk = new Lazy<double>(maxPriceFunc);
+
+                return products
+                    .Where(p => maxPriceThunk.Value == p.UnitPrice)
+                    .Select(p => p.ProductName)
+                    .ToList();
+            };
+
+            // ---------------------------------------------------------------------------------------------------------------
+
+            /*                                  "ZADANIE SPECJALNE"
+            
+            Cel:
+             - zapytanie zgodne semantycznie z metodą bazową,
+             - zapytanie ze złożonością liniową.
+            
+            Pomysł na osiągnięcie celu:
+            - zrobienie operacji typu "cross-join" z maksymalną ceną.
+             
+            Problemy:
+            - problemy są tak naprawdę dwa:
+            - (1): utworzenie jednego zapytania - wykonanie "cross" złączenia dwóch IEnumerable, 
+            - (2): posiadanie IEnumerable z maksymalną ceną, który _nie jest_ zmaterializowany.
+            
+            Przedstawiam możliwości (2):
+            
+            new[] { products.Max(p2 => p2.UnitPrice) } 
+            - liniowe, niezgodne semantycznie, tablica jest zmaterializowana
+            
+            Enumerable.Repeat(col.Max(p2 => p2.UnitPrice), 1)
+            - liniowe, nezgodne semantycznie, nadal wartość została zmaterializowana
+            
+            products.OrderByDescending(p2 => p2.UnitPrice).Take(1).Select(p2 => p2.UnitPrice)
+            - n*log(n), zgodnie semantycznie
+            
+            products.BetterMax(p2 => p2.UnitPrice)
+            - liniowe, zgodne semantycznie
+            - BetterMax jest własnym rozszerzeniem na Max
+            
+            Każdą z możliwości można wstawić w linii oznaczonej [XYZABC] co zmieni cechy zapytania.
+            Poniżej różne możliwości rozwiązania problemu (1).
+            */
+
+            // Czas: 1,2596ms
+            // Dokumentacja Join: https://msdn.microsoft.com/pl-pl/library/bb534675(v=vs.110).aspx
+            // Zgodność semantyczna:
+            // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
+            // Czy zoptymalizowano?
+            // - Tak. 
+            // Próba udana:
+            // - szczegóły co się dzieje opisyne niżej jako komentarz do poszczególnych linii zapytania.
+            Func<IList<Product>, Func<IEnumerable<string>>> method4 = (products) => () =>
+                products.Join(
+                        // Jedno elementowa druga kolekcja (b), z która będzie robionę złączenie.
+                        products.BetterMax(p2 => p2.UnitPrice), // [XYZABC]
+
+                        // Klucz złączenia. Jeżeli przyjmie tą samą wartość, to złaczenie będzie dokonane.
+                        // Jako iż chce zrobić cross-join zwracam "magic number" 10, lecz może być to dowolna inna taka sama wartość.
+                        // Takie coś spowoduje, że każdy Product zostanie złączony z każdą (a jest tylko jedna) ceną z drugiej kolekcji.
+                        a => 10, // a jest typu Product.
+                        b => 10, // b jest typu Double.
+
+                        // Funkcja złączenia produktu (a) z ceną (b).
+                        // Tworzę anonimowy obiekt posiadający produkt, i informację jaka cena była maksymalna.
+                        (a, b) => new {p = a, max = b})
+                    .Where(x => x.p.UnitPrice == x.max)
+                    .Select(x => x.p.ProductName);
+
+            // czas: 2704,1976ms
+            // Dokumentacja SelectMany: https://msdn.microsoft.com/pl-pl/library/bb534631(v=vs.110).aspx
+            // Zgodność semantyczna:
+            // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
+            // Czy zoptymalizowano?
+            // - Nie. Wciąż jest to to samo n^2.
+            // Próba nieudana, niedoczytałem dokumentacji jak to dokładnie działa.
+            // - collectionSelector - "A transform function to apply to EACH element of the input sequence",
+            // - collectionSelector jest wywoływany wielokrotnie (a więc obliczana cena), dla każdego produktu.
+            Func<IList<Product>, Func<IEnumerable<string>>> method5 = (products) => () =>
+                products
+                    .SelectMany(
+                        x => products.BetterMax(p2 => p2.UnitPrice), // collectionSelector // [XYZABC]
+                        (a, b) => new {p = a, max = b})
+                    .Where(x => x.p.UnitPrice == x.max)
+                    .Select(x => x.p.ProductName);
+
+            // czas: 1,2322ms
+            // Dokumentacja: https://msdn.microsoft.com/en-us/library/bb383978.aspx
+            // Zgodność semantyczna:
+            // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
+            // Czy zoptymalizowano?
+            // - Tak.
+            // Próba udana.
+            // - Kolejne instrukcje from mogą posłużyć do zrobienia spłaszczenia (flat), lub złączeń.
+            // - Dokumentacja zawiera bardzo podobny przykład wykonania cross-joina przy użyciu kontrukcji "multiple from".
+            // - Przykład nazywa się: "Using Multiple from Clauses to Perform Joins".
+            Func<IList<Product>, Func<IEnumerable<string>>> method6 = (products) => () =>
+                from max in products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
+                from prod in products
+                where prod.UnitPrice == max
+                select prod.ProductName;
+
+            // Czas: 1,9418ms
+            // Zgodność semantyczna:
+            // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
+            // Czy zoptymalizowano?
+            // - Tak.
+            // Próba udana.
+            // - Próba jest zapytaniem "method6" zapisanym bez query expression.
+            Func<IList<Product>, Func<IEnumerable<string>>> method7 = (products) => () =>
+                products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
+                    .SelectMany(
+                        m => products.Select(p => new {product = p, max = m})
+                    )
+                    .Where(o => o.product.UnitPrice == o.max)
+                    .Select(o => o.product.ProductName);
+
+            // ----------------------------------------------------------------------------------------
+            //                                      BENCHMARK
+
+            // Wszystkie metody są zgodne co do wyniku.
+            // Czasy zapisano przyy każdej z metod.
+            Benchmark.ExMulti(GetProductList(),
+                wMethod0, wMethod1, wMethod2, wMethod3,
+                method4, method5, method6, method7);
+
+            Func<IList<Product>, Func<IEnumerable<string>>>[] ownMethods =
+            {
+                method4, method5, method6, method7
+            };
+
+            // Dla pustej listy produtków pusty wynik.
+            // - upewnienie się, że nie rzuca wyjątku.
+            foreach (var ownMethod in ownMethods)
+            {
+                var emptyProductList = new List<Product>();
+                var emptyResult = ownMethod(emptyProductList)().ToList();
+
+                Console.WriteLine(emptyResult.Count);
+            }
+
+            // Podąża za zmiany na liście produktów.
+            // - nie występuje żadna materializajca.
+            foreach (var ownMethod in ownMethods)
+            {
+                var productList = GetProductList();
+                var enumerableX = ownMethod(productList)();
+
+                enumerableX.ToList(); // pierwsze wywołanie
+                productList.Add(new Product(9999, "XXXX", "XXXX", 999, 9999)); // uzupełniona kolekcja
+                var result = enumerableX.ToList();
+
+                Console.WriteLine(result[0]);
+            }
         }
     }
 }

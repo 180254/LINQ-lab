@@ -13,7 +13,7 @@ namespace QuerySamples
         public static bool ExDebug = false;
 
         /* ExMulti param: how many repeats do? */
-        public static int EmRepeats = 10;
+        public static int EmRepeats = 1;
 
         /* ExMulti param: do decreasing (true) or only base collection size (false)? */
         public static bool EmDecreasing = false;
