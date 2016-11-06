@@ -2716,14 +2716,14 @@ namespace SampleQueries {
             // - nie występuje żadna materializajca.
             foreach (var ownMethod in ownMethods)
             {
-                var productList = GetProductList();
+                var productList = new List<Product>(GetProductList());
                 var enumerableX = ownMethod(productList)();
 
-                enumerableX.ToList(); // pierwsze wywołanie
+                var result1 = enumerableX.ToList();
                 productList.Add(new Product(9999, "XXXX", "XXXX", 999, 9999)); // uzupełniona kolekcja
-                var result = enumerableX.ToList();
+                var result2 = enumerableX.ToList();
 
-                Console.WriteLine(result[0]);
+                Console.WriteLine(result1[0] + "/" + result2[0]);
             }
         }
     }
