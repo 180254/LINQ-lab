@@ -13,7 +13,7 @@ namespace QuerySamples
         public static bool ExDebug = false;
 
         /* ExMulti param: how many repeats do? */
-        public static int EmRepeats = 1;
+        public static int EmRepeats = 10;
 
         /* ExMulti param: do decreasing (true) or only base collection size (false)? */
         public static bool EmDecreasing = false;
@@ -36,7 +36,7 @@ namespace QuerySamples
 
             public void Describe()
             {
-                Console.WriteLine(@"time={0}", Time);
+                Console.WriteLine(@"time={0}", Time.TotalMilliseconds);
                 ObjectDumper.Write(Value);
                 Console.WriteLine();
             }
@@ -52,8 +52,7 @@ namespace QuerySamples
 
             if (ExDebug)
             {
-                Console.WriteLine(@"debug.Benchmark.Ex={0} | {1}",
-                    stopwatch.Elapsed.Ticks, stopwatch.Elapsed);
+                Console.WriteLine(@"debug.Benchmark.Ex={0}", stopwatch.Elapsed.TotalMilliseconds);
             }
 
             return new Result<T>(result, stopwatch.Elapsed);
@@ -154,7 +153,7 @@ namespace QuerySamples
 
             for (var i = 0; i < expr.Length; i++)
             {
-                Console.WriteLine(@"expr[{0}]-times: {1}", i, string.Join(", ", exprTimes[i].Select(t => t.Ticks)));
+                Console.WriteLine(@"expr[{0}]-times: {1}", i, string.Join(", ", exprTimes[i].Select(t => t.TotalMilliseconds)));
             }
 
             Console.WriteLine(@"unanimities: {0}", exprUnanimities.All(u => u));
