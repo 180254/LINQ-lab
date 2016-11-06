@@ -2493,6 +2493,10 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad327()
         {
+            /**
+             * 0. wersja (bazowa).
+             * Zmierzony czas: 2264,7479ms
+             */
             Func<IList<Product>, Func<IEnumerable<string>>> method0 = (products) => () =>
                 from prod in products
                 where (from prod2 in products
@@ -2500,6 +2504,10 @@ namespace SampleQueries {
                     select prod2.UnitPrice).Contains(prod.UnitPrice)
                 select prod.ProductName;
 
+            /**
+             * 1. wersja.
+             * Zmierzony czas: 0,6073ms
+             */
             Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
             {
                 var ikuraPrices =
