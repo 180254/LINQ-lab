@@ -2318,8 +2318,14 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad324()
         {
+            /**
+             * 0. wersja (bazowa).
+             * - Typowe n^2.
+             * Zmierzony czas: 3243,3388ms
+             */
             Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
+                    // .AsParallel()
                     .Select(p =>
                         new
                         {
@@ -2327,19 +2333,20 @@ namespace SampleQueries {
                             SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
                         });
 
-            // method0 z AsParallel
+            /**
+             *  1. Wersja.
+             *  - Niezbyt udana próba osiągnięcia efektywnego n*log(n)).
+             *  - Osiągnięta złożoność pesymistyczna O(2*n*log(n)+n*(n+log(n)+n) = O(n*log(n)+n^2*log(n))
+             *  - Efektywna złożoność zalezy od liczby produktów spełniających założenia.
+             *  - Takich produktów jest dużo, więc właściwie jest ona zbliżona do pesymistycznej.
+             *  - Bida, bida, bida.
+             *  - Kierunek okazał się być niezbyt dobrym.
+             * Zgodność wyniku z wersją bazową.
+             * Brak zgodności semantycznej z wersją bazową(!):
+             * - Wynik częsciowo zostaje wcześniej zmaterializowany.
+             *  Zmierzony czas: 30526,2392ms
+             */
             Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
-                products
-                    .AsParallel()
-                    .Select(p =>
-                        new
-                        {
-                            Product = p.ProductName,
-                            SpecCnt = products.Count(o => o.UnitPrice < p.UnitPrice || o.UnitsInStock < p.UnitsInStock)
-                        });
-
-            // niezbyt udana proba n*log(n)
-            Func<IList<Product>, Func<IEnumerable<object>>> method2 = (products) => () =>
             {
                 var prodOrdered0 = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
                 var prodOrdered1 = products.OrderBy(p => p.UnitsInStock).ToList(); // n*log(n)
@@ -2351,27 +2358,29 @@ namespace SampleQueries {
 
                 Func<Product, int> specCount = (product) =>
                 {
-                    // zle! produkt poprzedni moze miec cene taka sama, nie koniecznie nizsza
-                    var prodMatch0 = prodOrdered0.Take(prodOrdered0.BinarySearch(product, prodComparer0)); // n?+log(n)
-                    var prodMatch1 = prodOrdered1.Take(prodOrdered1.BinarySearch(product, prodComparer1)); // n?+log(n)
+                    // zle! produkt poprzedni moze miec cene taka sama, nie koniecznie nizsza, konieczny dodatkowy fix (*)
+                    var prodMatch0 = prodOrdered0.Take(prodOrdered0.BinarySearch(product, prodComparer0)); // log(n)
+                    var prodMatch1 = prodOrdered1.Take(prodOrdered1.BinarySearch(product, prodComparer1)); // log(n)
 
+                    // unia ubydwu iteratorów
                     return Enumerable.Union(
                         prodMatch0,
                         prodMatch1,
                         prodEqComparer
-                        // ojojojjooj
-                    ).Count(o => o.UnitPrice < product.UnitPrice || o.UnitsInStock < product.UnitsInStock);
+                    // wymagane dodatkowe warunki gdyż (*)
+                    ).Count(o => o.UnitPrice < product.UnitPrice || o.UnitsInStock < product.UnitsInStock); // n
                 };
 
                 return products
-                    .Select(p => new
+                    // 2*(n*log(n)) - jednorazowe koszty sortowania
+                    .Select(p => new // n*
                     {
                         Product = p.ProductName,
-                        SpecCnt = specCount(p)
+                        SpecCnt = specCount(p) // n+log(n)
                     });
             };
 
-            Benchmark.ExMulti(GetProductList(), method0, method1 /*, method2*/);
+            Benchmark.ExMulti(GetProductList(), method0, method1);
         }
 
         [Category("lab2")]
