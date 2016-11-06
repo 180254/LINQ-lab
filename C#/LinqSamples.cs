@@ -2107,9 +2107,11 @@ namespace SampleQueries {
              * 0. wersja (bazowa).
              * - Jeden złożony warunek.
              * Zmierzony czas: 0,2159ms
+             * Zmierzony czas (Parallel): 0,3961ms
              */
             Func<IList<Product>, Func<IEnumerable<string>>> method0 = (products) => () =>
                 products
+                    // .AsParallel()
                     .Where(
                         p => p.UnitsInStock > 0
                              && p.UnitPrice < 10
@@ -2122,9 +2124,11 @@ namespace SampleQueries {
               * - Jeden złożony warunek, lecz z inną kolejnością warunków bazowych.
               * Semantyczna zgodność z wersją bazową.
               * Zmierzony czas: 0,2891ms
+              * Zmierzony czas (Parallel): 0,3687ms
               */
             Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
                 products
+                    // .AsParallel()
                     .Where(
                         p => p.Category.Equals("Seafood")
                              && p.UnitPrice < 10
@@ -2137,9 +2141,11 @@ namespace SampleQueries {
              * - Konieczność wywołania kilku iteratorów.
              * Semantyczna zgodność z wersją bazową.
              * Zmierzony czas: 0,3001ms
+             * Zmierzony czas (Parallel): 0,4179ms
              */
             Func<IList<Product>, Func<IEnumerable<string>>> method2 = (products) => () =>
                 products
+                    // .AsParallel()
                     .Where(p => p.Category.Equals("Seafood"))
                     .Where(p => p.UnitsInStock > 0)
                     .Where(p => p.UnitPrice < 10)
@@ -2163,10 +2169,12 @@ namespace SampleQueries {
               * Wady:
               * - znajduje jeden produkt, potencjalnie może być więcej produktów o takie cenie.
               * Zmierzony czas: 10,8809ms
+              * Zmierzony czas (Parallel): 6,1188ms
               */
             Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .GroupBy(p => p.Category)
+                    // .AsParallel()
                     .Select(c =>
                         new
                         {
@@ -2183,6 +2191,7 @@ namespace SampleQueries {
              * - jak w wersji bazowej
              * Semantyczna zgodność z wersją bazową.
              * Zmierzony czas: 4,9614ms
+             * Zmierzony czas (Parallel): 3,405ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
                 products
@@ -2211,6 +2220,7 @@ namespace SampleQueries {
              * Semantyczna zgodność z wersją bazową zależy od implementacji:
              * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
              * Zmierzony czas: 1,4007ms
+             * Zmierzony czas (Parallel): 1,4345ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method2 = (products) => () =>
                 products
@@ -2233,10 +2243,12 @@ namespace SampleQueries {
              * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
              * - pełna zgodność semantyczna z wersją 2-gą
              * Zmierzony czas: 3,3472ms
+             * Zmierzony czas (Parallel): 2,2844ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method3 = (products) => () =>
                 products
                     .Select(p => p.Category).Distinct()
+                    // .AsParallel()
                     .Select(c =>
                         new
                         {
@@ -2270,10 +2282,12 @@ namespace SampleQueries {
              * Wady:
              * - znajduje jeden wynik, potencjalnie może być więcej identycznych wyników (tyle samo sztuk)
              * Zmierzony czas: 5,1308ms
+             * Zmierzony czas (Parallel): 6,9503ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .GroupBy(p => p.UnitPrice)
+                    // .AsParallel()
                     .Select(o =>
                         new
                         {
@@ -2294,11 +2308,13 @@ namespace SampleQueries {
              * - Wynik zostaje wcześniej zmaterializowany, każde wywołanie poda ten sam rezultat.
              * - Cały koszt zostaje przeniesiony na wywołanie funkcji budującej zapytanie.
              * Zmierzony czas: 3,3173ms
+             * Zmierzony czas (Parallel): 4,0375ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
                 Enumerable.Repeat(
                     products
                         .GroupBy(p => p.UnitPrice)
+                        // .AsParallel()
                         .Select(o =>
                             new
                             {
@@ -2322,6 +2338,7 @@ namespace SampleQueries {
              * 0. wersja (bazowa).
              * - Typowe n^2.
              * Zmierzony czas: 3243,3388ms
+             * Zmierzony czas (Parallel): 2067,0296ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
@@ -2345,6 +2362,7 @@ namespace SampleQueries {
              * Brak zgodności semantycznej z wersją bazową(!):
              * - Wynik częsciowo zostaje wcześniej zmaterializowany.
              *  Zmierzony czas: 30526,2392ms
+             *  Zmierzony czas (Parallel): 17057,0302ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
             {
@@ -2367,12 +2385,13 @@ namespace SampleQueries {
                         prodMatch0,
                         prodMatch1,
                         prodEqComparer
-                    // wymagane dodatkowe warunki gdyż (*)
+                        // wymagane dodatkowe warunki gdyż (*)
                     ).Count(o => o.UnitPrice < product.UnitPrice || o.UnitsInStock < product.UnitsInStock); // n
                 };
 
                 return products
                     // 2*(n*log(n)) - jednorazowe koszty sortowania
+                    // .AsParallel()
                     .Select(p => new // n*
                     {
                         Product = p.ProductName,
@@ -2395,9 +2414,11 @@ namespace SampleQueries {
              * 0. wersja (bazowa).
              * - Typowe n^2.
              * Zmierzony czas: 2569,4958ms
+             * Zmierzony czas (Parallel): 1531,5287ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
+                    // .AsParallel()
                     .Select(p =>
                         new
                         {
@@ -2413,6 +2434,7 @@ namespace SampleQueries {
              * Brak zgodności semantycznej z wersją bazową(!):
              * - Wynik częsciowo zostaje wcześniej zmaterializowany.
              * Zmierzony czas: 13,1354ms
+             * Zmierzony czas (Parallel): 6,6547ms
              */
             Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
             {
@@ -2441,6 +2463,7 @@ namespace SampleQueries {
                 };
 
                 return prodOrdered
+                    // .AsParallel()
                     .Select( // n
                         (prod, index) =>
                             new
@@ -2458,6 +2481,8 @@ namespace SampleQueries {
         [Description("Do rozwiązań zastosuj Parallel LINQ i sprawdź poprawę wydajności.")]
         public void Linq_Lab2_zad326()
         {
+            // Zrównoleglenie nie zawsze przynosi wymierny zysk, czasami wręcz startę.
+            // Koszty operacji zrównoleglenia, zmiany kontekstów, i łączenia wyników mogą być zbyt duże.
         }
 
         [Category("lab2")]
