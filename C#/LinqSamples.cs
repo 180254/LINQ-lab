@@ -2103,23 +2103,49 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad321()
         {
+            /**
+             * 0. wersja (bazowa).
+             * - Jeden złożony warunek.
+             * Zmierzony czas: 0,2159ms
+             */
             Func<IList<Product>, IEnumerable<string>> method0 = (products) =>
                 products
                     .Where(
                         p => p.UnitsInStock > 0
                              && p.UnitPrice < 10
-                             && p.Category == "Seafood"
+                             && p.Category.Equals("Seafood")
                     )
                     .Select(p => p.ProductName);
 
+            /**
+              * 1. wersja.
+              * - Jeden złożony warunek, lecz z inną kolejnością warunków bazowych.
+              * Semantyczna zgodność z wersją bazową.
+              * Zmierzony czas: 0,2891ms
+              */
             Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
                 products
+                    .Where(
+                        p => p.Category.Equals("Seafood")
+                             && p.UnitPrice < 10
+                             && p.UnitsInStock > 0
+                    )
+                    .Select(p => p.ProductName);
+            /**
+             * 2. wersja.
+             * - Warunek złożony rozbity na serię warunków pojedynczych.
+             * - Konieczność wywołania kilku iteratorów.
+             * Semantyczna zgodność z wersją bazową.
+             * Zmierzony czas: 0,3001ms
+             */
+            Func<IList<Product>, IEnumerable<string>> method2 = (products) =>
+                products
+                    .Where(p => p.Category.Equals("Seafood"))
                     .Where(p => p.UnitsInStock > 0)
                     .Where(p => p.UnitPrice < 10)
-                    .Where(p => p.Category == "Seafood")
                     .Select(p => p.ProductName);
 
-            Benchmark.ExMulti(GetProductList(), method0, method1);
+            Benchmark.ExMulti(GetProductList(), method0, method1, method2);
         }
 
         [Category("lab2")]
@@ -2130,7 +2156,14 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad322()
         {
-            // pierwszy pomysł
+            /**
+              * 0. wersja (bazowa).
+              * - Produkty grupowane po kategorii.
+              * - Podwójne sortowanie w celu znalezienia najtańszego (1-wsze) i najdroższego produktu (2-gie).
+              * Wady:
+              * - znajduje jeden produkt, potencjalnie może być więcej produktów o takie cenie.
+              * Zmierzony czas: 10,8809ms
+              */
             Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
                 products
                     .GroupBy(p => p.Category)
@@ -2138,87 +2171,87 @@ namespace SampleQueries {
                         new
                         {
                             Category = c.Key,
-                            CheapestProduct = c.OrderBy(k => k.UnitPrice).First().ProductName,
-                            MostExpensiveProduct = c.OrderByDescending(k => k.UnitPrice).First().ProductName
+                            ChP = c.OrderBy(k => k.UnitPrice).First().ProductName,
+                            MeP = c.OrderByDescending(k => k.UnitPrice).First().ProductName
                         });
 
-            // method0 z uniknięciem podwójnego sortowania
+            /**
+             * 1. wersja.
+             * - Produkty grupowane po kategorii.
+             * - Produkty są posortowane raz, zamiast dwóch.
+              * Wady:
+              * - jak w wersji bazowej
+             * Semantyczna zgodność z wersją bazową.
+             * Zmierzony czas: 4,9614ms
+             */
             Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
                 products
                     .GroupBy(p => p.Category)
+                    // .AsParallel()
                     .Select(c =>
                         new
                         {
                             Category = c.Key,
-                            OrderedProducts = c.OrderBy(k => k.UnitPrice)
+                            OrderedProducts = c.OrderBy(k => k.UnitPrice).ToList()
                         })
                     .Select(o =>
                         new
                         {
                             o.Category,
-                            CheapestProduct = o.OrderedProducts.First().ProductName,
-                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                            ChP = o.OrderedProducts.First().ProductName,
+                            MeP = o.OrderedProducts.Last().ProductName
                         });
 
-            // method1 z materializacją OrderedProducts
+            /**
+             * 2. wersja.
+             * - Produkty grupowane po kategorii.
+             * - Zamiast sortowania dwa razy przejście O(n).
+             * Wady:
+             * - jak w wersji bazowej
+             * Semantyczna zgodność z wersją bazową zależy od implementacji:
+             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
+             * Zmierzony czas: 1,4007
+             */
             Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
                 products
                     .GroupBy(p => p.Category)
+                    // .AsParallel()
                     .Select(c =>
                         new
                         {
                             Category = c.Key,
-                            OrderedProducts = c.OrderBy(k => k.UnitPrice).ToList()
-                        })
-                    .Select(o =>
-                        new
-                        {
-                            o.Category,
-                            CheapestProduct = o.OrderedProducts.First().ProductName,
-                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                            ChP = c.Aggregate((a, b) => a.UnitPrice <= b.UnitPrice ? a : b).ProductName,
+                            MeP = c.Aggregate((a, b) => a.UnitPrice >= b.UnitPrice ? a : b).ProductName,
                         });
 
-            // method2 z AsParallel
+            /**
+             * 3. wersja.
+             * - Grupowanie zrobione samodzielnie, bez użycia metody GroupBy.
+              * Wady:
+              * - jak w wersji bazowej
+             * Semantyczna zgodność z wersją bazową zależy od implementacji:
+             * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
+             * - pełna zgodność semantyczna z wersją 2-gą
+             * Zmierzony czas: 3,3472
+             */
             Func<IList<Product>, IEnumerable<object>> method3 = (products) =>
-                products
-                    .GroupBy(p => p.Category)
-                    .AsParallel()
-                    .Select(c =>
-                        new
-                        {
-                            Category = c.Key,
-                            OrderedProducts = c.OrderBy(k => k.UnitPrice).ToList()
-                        })
-                    .Select(o =>
-                        new
-                        {
-                            o.Category,
-                            CheapestProduct = o.OrderedProducts.First().ProductName,
-                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
-                        });
-
-            // wersja bez GroupBy
-            Func<IList<Product>, IEnumerable<object>> method4 = (products) =>
-            {
-                var categories = products.Select(p => p.Category).Distinct();
-
-                return categories
+                products.Select(p => p.Category).Distinct()
                     .Select(c =>
                         new
                         {
                             Category = c,
-                            OrderedProducts = products.Where(p => p.Category == c).OrderBy(p => p.UnitPrice).ToList()
+                            Products = products.Where(p => p.Category == c).ToList()
                         })
                     .Select(o =>
                         new
                         {
                             o.Category,
-                            CheapestProduct = o.OrderedProducts.First().ProductName,
-                            MostExpensiveProduct = o.OrderedProducts.Last().ProductName
+                            ChP = o.Products.Aggregate((a, b) => a.UnitPrice <= b.UnitPrice ? a : b).ProductName,
+                            MeP = o.Products.Aggregate((a, b) => a.UnitPrice >= b.UnitPrice ? a : b).ProductName,
                         });
-            };
 
-            Benchmark.ExMulti(GetProductList(), method0, method1, method2, method3, method4);
+
+            Benchmark.ExMulti(GetProductList(), method0, method1, method2, method3);
         }
 
         [Category("lab2")]
