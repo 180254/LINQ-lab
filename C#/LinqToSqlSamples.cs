@@ -3839,7 +3839,6 @@ namespace SampleQueries {
             ObjectDumper.Write(result);
         }
 
-
         [Category("lab2")]
         [Title("Zad 3.1.3 (*) + time(3.2.3)")]
         [Description(
@@ -3848,7 +3847,7 @@ namespace SampleQueries {
          )]
         public void LinqToSql_Lab2_Zad313()
         {
-            IEnumerable<string> suppliers =
+            Func<IEnumerable<string>> suppliers = () =>
                 db.Customers
                     .Where(c => c.CompanyName == "Seven Seas Imports")
                     .SelectMany(

@@ -44,10 +44,10 @@ namespace QuerySamples
 
         // ----------------------------------------------------------------------------------------------------------
 
-        public static Result<T> Ex<T>(IEnumerable<T> expr)
+        public static Result<T> Ex<T>(Func<IEnumerable<T>> expr)
         {
             var stopwatch = Stopwatch.StartNew();
-            var result = expr.ToList();
+            var result = expr.Invoke().ToList();
             stopwatch.Stop();
 
             if (ExDebug)
@@ -60,7 +60,7 @@ namespace QuerySamples
 
         // ----------------------------------a------------------------------------------------------------------------
 
-        public static Result<T> Ex<T>(IEnumerable<T> expr, int repeats)
+        public static Result<T> Ex<T>(Func<IEnumerable<T>> expr, int repeats)
         {
             if (ExDebug)
             {
@@ -99,7 +99,7 @@ namespace QuerySamples
 
         public static void ExMulti<TSource, TResult>(
             ICollection<TSource> testCollection,
-            params Func<IList<TSource>, IEnumerable<TResult>>[] expr)
+            params Func<IList<TSource>, Func<IEnumerable<TResult>>>[] expr)
         {
             var collectionSizes = new List<int>();
             var exprTimes = new List<TimeSpan>[expr.Length];
@@ -153,7 +153,8 @@ namespace QuerySamples
 
             for (var i = 0; i < expr.Length; i++)
             {
-                Console.WriteLine(@"expr[{0}]-times: {1}", i, string.Join(", ", exprTimes[i].Select(t => t.TotalMilliseconds)));
+                Console.WriteLine(@"expr[{0}]-times: {1}", i,
+                    string.Join(", ", exprTimes[i].Select(t => t.TotalMilliseconds)));
             }
 
             Console.WriteLine(@"unanimities: {0}", exprUnanimities.All(u => u));

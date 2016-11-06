@@ -1966,8 +1966,7 @@ namespace SampleQueries {
             Console.WriteLine("Orders Log:");
             Console.WriteLine(log.ToString());
         }
-
-
+        
         // ---------------------------------------------------------------------------------------------------------------
 
         [Category("lab1")]
@@ -1997,7 +1996,7 @@ namespace SampleQueries {
         {
             var doc = XDocument.Load(dataPath + "Customers.xml");
 
-            IEnumerable<object> cities =
+            Func<IEnumerable<object>> cities = () =>
                 from customer in doc.Descendants("customer")
                 group customer by customer.Element("city")?.Value
                 into cityGroup

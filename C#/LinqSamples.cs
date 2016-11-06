@@ -2035,7 +2035,7 @@ namespace SampleQueries {
             var products = GetProductList();
 
             var ikuraPrices =
-                (from prod in products
+            (from prod in products
                 where prod.ProductName == "Ikura"
                 select prod.UnitPrice).ToList();
 
@@ -2088,7 +2088,7 @@ namespace SampleQueries {
                 return pFactor > squareRoot;
             };
 
-            var primes =
+            Func<IEnumerable<int>> primes = () =>
                 from n in Enumerable.Range(1, 888)
                 where isPrime(n)
                 select n;
@@ -2108,7 +2108,7 @@ namespace SampleQueries {
              * - Jeden złożony warunek.
              * Zmierzony czas: 0,2159ms
              */
-            Func<IList<Product>, IEnumerable<string>> method0 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<string>>> method0 = (products) => () =>
                 products
                     .Where(
                         p => p.UnitsInStock > 0
@@ -2123,7 +2123,7 @@ namespace SampleQueries {
               * Semantyczna zgodność z wersją bazową.
               * Zmierzony czas: 0,2891ms
               */
-            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
                 products
                     .Where(
                         p => p.Category.Equals("Seafood")
@@ -2138,7 +2138,7 @@ namespace SampleQueries {
              * Semantyczna zgodność z wersją bazową.
              * Zmierzony czas: 0,3001ms
              */
-            Func<IList<Product>, IEnumerable<string>> method2 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<string>>> method2 = (products) => () =>
                 products
                     .Where(p => p.Category.Equals("Seafood"))
                     .Where(p => p.UnitsInStock > 0)
@@ -2164,7 +2164,7 @@ namespace SampleQueries {
               * - znajduje jeden produkt, potencjalnie może być więcej produktów o takie cenie.
               * Zmierzony czas: 10,8809ms
               */
-            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .GroupBy(p => p.Category)
                     .Select(c =>
@@ -2184,7 +2184,7 @@ namespace SampleQueries {
              * Semantyczna zgodność z wersją bazową.
              * Zmierzony czas: 4,9614ms
              */
-            Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
                 products
                     .GroupBy(p => p.Category)
                     // .AsParallel()
@@ -2210,9 +2210,9 @@ namespace SampleQueries {
              * - jak w wersji bazowej
              * Semantyczna zgodność z wersją bazową zależy od implementacji:
              * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
-             * Zmierzony czas: 1,4007
+             * Zmierzony czas: 1,4007ms
              */
-            Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method2 = (products) => () =>
                 products
                     .GroupBy(p => p.Category)
                     // .AsParallel()
@@ -2232,10 +2232,11 @@ namespace SampleQueries {
              * Semantyczna zgodność z wersją bazową zależy od implementacji:
              * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
              * - pełna zgodność semantyczna z wersją 2-gą
-             * Zmierzony czas: 3,3472
+             * Zmierzony czas: 3,3472ms
              */
-            Func<IList<Product>, IEnumerable<object>> method3 = (products) =>
-                products.Select(p => p.Category).Distinct()
+            Func<IList<Product>, Func<IEnumerable<object>>> method3 = (products) => () =>
+                products
+                    .Select(p => p.Category).Distinct()
                     .Select(c =>
                         new
                         {
@@ -2268,9 +2269,9 @@ namespace SampleQueries {
              * - Wyniki posortowane i pobrany pierwszy wynik.
              * Wady:
              * - znajduje jeden wynik, potencjalnie może być więcej identycznych wyników (tyle samo sztuk)
-             * Zmierzony czas:
+             * Zmierzony czas: 5,1308ms
              */
-            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .GroupBy(p => p.UnitPrice)
                     .Select(o =>
@@ -2289,11 +2290,12 @@ namespace SampleQueries {
              * - jak w wersji bazowej
              * Zgodność wyniku z wersją bazową zależy od implementacji:
              * - zgodność jest zachowana o ile zastosowano sortowanie stabilne
-             * Brak zgodności semantycznej:
+             * Brak zgodności semantycznej (!):
              * - Wynik zostaje wcześniej zmaterializowany, każde wywołanie poda ten sam rezultat.
-             * Zmierzony czas:
+             * - Cały koszt zostaje przeniesiony na wywołanie funkcji budującej zapytanie.
+             * Zmierzony czas: 3,3173ms
              */
-            Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
                 Enumerable.Repeat(
                     products
                         .GroupBy(p => p.UnitPrice)
@@ -2316,7 +2318,7 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad324()
         {
-            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .Select(p =>
                         new
@@ -2326,7 +2328,7 @@ namespace SampleQueries {
                         });
 
             // method0 z AsParallel
-            Func<IList<Product>, IEnumerable<object>> method1 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
                 products
                     .AsParallel()
                     .Select(p =>
@@ -2337,7 +2339,7 @@ namespace SampleQueries {
                         });
 
             // niezbyt udana proba n*log(n)
-            Func<IList<Product>, IEnumerable<object>> method2 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method2 = (products) => () =>
             {
                 var prodOrdered0 = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
                 var prodOrdered1 = products.OrderBy(p => p.UnitsInStock).ToList(); // n*log(n)
@@ -2354,7 +2356,7 @@ namespace SampleQueries {
                     var prodMatch1 = prodOrdered1.Take(prodOrdered1.BinarySearch(product, prodComparer1)); // n?+log(n)
 
                     return Enumerable.Union(
-                        prodMatch0, 
+                        prodMatch0,
                         prodMatch1,
                         prodEqComparer
                         // ojojojjooj
@@ -2369,7 +2371,7 @@ namespace SampleQueries {
                     });
             };
 
-            Benchmark.ExMulti(GetProductList(), method0, method1/*, method2*/);
+            Benchmark.ExMulti(GetProductList(), method0, method1 /*, method2*/);
         }
 
         [Category("lab2")]
@@ -2380,7 +2382,7 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad325()
         {
-            Func<IList<Product>, IEnumerable<object>> method0 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method0 = (products) => () =>
                 products
                     .Select(p =>
                         new
@@ -2389,7 +2391,7 @@ namespace SampleQueries {
                             SpecCnt = products.Count(o => Math.Abs(o.UnitPrice - p.UnitPrice) < 0.0001)
                         });
 
-            Func <IList<Product>, IEnumerable<object>> method1 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<object>>> method1 = (products) => () =>
             {
                 var prodOrdered = products.OrderBy(p => p.UnitPrice).ToList(); // n*log(n)
 
@@ -2443,14 +2445,14 @@ namespace SampleQueries {
          )]
         public void Linq_Lab2_zad327()
         {
-            Func<IList<Product>, IEnumerable<string>> method0 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<string>>> method0 = (products) => () =>
                 from prod in products
                 where (from prod2 in products
                     where prod2.ProductName == "Ikura"
                     select prod2.UnitPrice).Contains(prod.UnitPrice)
                 select prod.ProductName;
 
-            Func<IList<Product>, IEnumerable<string>> method1 = (products) =>
+            Func<IList<Product>, Func<IEnumerable<string>>> method1 = (products) => () =>
             {
                 var ikuraPrices =
                     from prod in products
