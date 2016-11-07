@@ -2640,12 +2640,12 @@ namespace SampleQueries {
                     .Where(x => x.p.UnitPrice == x.max)
                     .Select(x => x.p.ProductName);
 
-            // czas: 2704,1976ms
+            // czas: 4572,4791ms
             // Dokumentacja SelectMany: https://msdn.microsoft.com/pl-pl/library/bb534631(v=vs.110).aspx
             // Zgodność semantyczna:
             // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
             // Czy zoptymalizowano?
-            // - Nie. Wciąż jest to to samo n^2.
+            // - Nie. Wciąż jest to to samo n^2, a nawet gorsze.
             // Próba nieudana, niedoczytałem dokumentacji jak to dokładnie działa.
             // - collectionSelector - "A transform function to apply to EACH element of the input sequence",
             // - collectionSelector jest wywoływany wielokrotnie (a więc obliczana cena), dla każdego produktu.
@@ -2673,7 +2673,7 @@ namespace SampleQueries {
                 where prod.UnitPrice == max
                 select prod.ProductName;
 
-            // Czas: 1,9418ms
+            // Czas: 0,5881ms
             // Zgodność semantyczna:
             // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
             // Czy zoptymalizowano?
@@ -2683,10 +2683,9 @@ namespace SampleQueries {
             Func<IList<Product>, Func<IEnumerable<string>>> method7 = (products) => () =>
                 products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
                     .SelectMany(
-                        m => products.Select(p => new {product = p, max = m})
-                    )
-                    .Where(o => o.product.UnitPrice == o.max)
-                    .Select(o => o.product.ProductName);
+                        max => products.Where(p => p.UnitPrice == max).Select(p => p.ProductName)
+                    );
+                   
 
             // ----------------------------------------------------------------------------------------
             //                                      BENCHMARK
@@ -2717,13 +2716,13 @@ namespace SampleQueries {
             foreach (var ownMethod in ownMethods)
             {
                 var productList = new List<Product>(GetProductList());
-                var enumerableX = ownMethod(productList)();
+                IEnumerable<string> enumerableX = ownMethod(productList)();
 
-                var result1 = enumerableX.ToList();
+                var before = enumerableX.ToList();
                 productList.Add(new Product(9999, "XXXX", "XXXX", 999, 9999)); // uzupełniona kolekcja
-                var result2 = enumerableX.ToList();
+                var after = enumerableX.ToList();
 
-                Console.WriteLine(result1[0] + "/" + result2[0]);
+                Console.WriteLine(@"{0}/{1}", before[0], after[0]);
             }
         }
     }
