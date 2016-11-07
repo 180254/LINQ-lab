@@ -2640,24 +2640,7 @@ namespace SampleQueries {
                     .Where(x => x.p.UnitPrice == x.max)
                     .Select(x => x.p.ProductName);
 
-            // czas: 4572,4791ms
-            // Dokumentacja SelectMany: https://msdn.microsoft.com/pl-pl/library/bb534631(v=vs.110).aspx
-            // Zgodność semantyczna:
-            // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
-            // Czy zoptymalizowano?
-            // - Nie. Wciąż jest to to samo n^2, a nawet gorsze.
-            // Próba nieudana, niedoczytałem dokumentacji jak to dokładnie działa.
-            // - collectionSelector - "A transform function to apply to EACH element of the input sequence",
-            // - collectionSelector jest wywoływany wielokrotnie (a więc obliczana cena), dla każdego produktu.
-            Func<IList<Product>, Func<IEnumerable<string>>> method5 = (products) => () =>
-                products
-                    .SelectMany(
-                        x => products.BetterMax(p2 => p2.UnitPrice), // collectionSelector // [XYZABC]
-                        (a, b) => new {p = a, max = b})
-                    .Where(x => x.p.UnitPrice == x.max)
-                    .Select(x => x.p.ProductName);
-
-            // czas: 1,2322ms
+            // czas: 0,5727ms
             // Dokumentacja: https://msdn.microsoft.com/en-us/library/bb383978.aspx
             // Zgodność semantyczna:
             // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
@@ -2667,10 +2650,9 @@ namespace SampleQueries {
             // - Kolejne instrukcje from mogą posłużyć do zrobienia spłaszczenia (flat), lub złączeń.
             // - Dokumentacja zawiera bardzo podobny przykład wykonania cross-joina przy użyciu kontrukcji "multiple from".
             // - Przykład nazywa się: "Using Multiple from Clauses to Perform Joins".
-            Func<IList<Product>, Func<IEnumerable<string>>> method6 = (products) => () =>
+            Func<IList<Product>, Func<IEnumerable<string>>> method5 = (products) => () =>
                 from max in products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
-                from prod in products
-                where prod.UnitPrice == max
+                from prod in products.Where(p => p.UnitPrice == max) 
                 select prod.ProductName;
 
             // Czas: 0,5881ms
@@ -2679,8 +2661,8 @@ namespace SampleQueries {
             // Czy zoptymalizowano?
             // - Tak.
             // Próba udana.
-            // - Próba jest zapytaniem "method6" zapisanym bez query expression.
-            Func<IList<Product>, Func<IEnumerable<string>>> method7 = (products) => () =>
+            // - Próba jest zapytaniem "method5" zapisanym bez query expression.
+            Func<IList<Product>, Func<IEnumerable<string>>> method6 = (products) => () =>
                 products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
                     .SelectMany(
                         max => products.Where(p => p.UnitPrice == max).Select(p => p.ProductName)
@@ -2694,11 +2676,11 @@ namespace SampleQueries {
             // Czasy zapisano przyy każdej z metod.
             Benchmark.ExMulti(GetProductList(),
                 wMethod0, wMethod1, wMethod2, wMethod3,
-                method4, method5, method6, method7);
+                method4, method5, method6);
 
             Func<IList<Product>, Func<IEnumerable<string>>>[] ownMethods =
             {
-                method4, method5, method6, method7
+                method4, method5, method6,
             };
 
             // Dla pustej listy produtków pusty wynik.
