@@ -2610,6 +2610,10 @@ namespace SampleQueries {
             products.BetterMax(p2 => p2.UnitPrice)
             - liniowe, zgodne semantycznie
             - BetterMax jest własnym rozszerzeniem na Max
+
+            products.Lazy(p => p.Max(p2 => p2.UnitPrice))
+            - liniowe, zgodne semantycznie
+            - idea zastosowana w BetterMax zastosowana w sposób generyczny
             
             Każdą z możliwości można wstawić w linii oznaczonej [XYZABC] co zmieni cechy zapytania.
             Poniżej różne możliwości rozwiązania problemu (1).
@@ -2626,7 +2630,7 @@ namespace SampleQueries {
             Func<IList<Product>, Func<IEnumerable<string>>> method4 = (products) => () =>
                 products.Join(
                         // Jedno elementowa druga kolekcja (b), z która będzie robionę złączenie.
-                        products.BetterMax(p2 => p2.UnitPrice), // [XYZABC]
+                        products.Lazy(p => p.Max(p2 => p2.UnitPrice)), // [XYZABC]
 
                         // Klucz złączenia. Jeżeli przyjmie tą samą wartość, to złaczenie będzie dokonane.
                         // Jako iż chce zrobić cross-join zwracam "magic number" 10, lecz może być to dowolna inna taka sama wartość.
@@ -2640,7 +2644,7 @@ namespace SampleQueries {
                     .Where(x => x.p.UnitPrice == x.max)
                     .Select(x => x.p.ProductName);
 
-            // czas: 0,5727ms
+            // czas: 0,4106ms
             // Dokumentacja: https://msdn.microsoft.com/en-us/library/bb383978.aspx
             // Zgodność semantyczna:
             // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
@@ -2651,11 +2655,11 @@ namespace SampleQueries {
             // - Dokumentacja zawiera bardzo podobny przykład wykonania cross-joina przy użyciu kontrukcji "multiple from".
             // - Przykład nazywa się: "Using Multiple from Clauses to Perform Joins".
             Func<IList<Product>, Func<IEnumerable<string>>> method5 = (products) => () =>
-                from max in products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
-                from prod in products.Where(p => p.UnitPrice == max) 
+                from max in products.Lazy(p => p.Max(p2 => p2.UnitPrice)) // [XYZABC]
+                from prod in products.Where(p => p.UnitPrice == max)
                 select prod.ProductName;
 
-            // Czas: 0,5881ms
+            // Czas: 0,4212ms
             // Zgodność semantyczna:
             // - Tak. * (* zależne od sposobu rozwiązania problemu (1))
             // Czy zoptymalizowano?
@@ -2663,7 +2667,7 @@ namespace SampleQueries {
             // Próba udana.
             // - Próba jest zapytaniem "method5" zapisanym bez query expression.
             Func<IList<Product>, Func<IEnumerable<string>>> method6 = (products) => () =>
-                products.BetterMax(p2 => p2.UnitPrice) // [XYZABC]
+                products.Lazy(p => p.Max(p2 => p2.UnitPrice)) // [XYZABC]
                     .SelectMany(
                         max => products.Where(p => p.UnitPrice == max).Select(p => p.ProductName)
                     );
