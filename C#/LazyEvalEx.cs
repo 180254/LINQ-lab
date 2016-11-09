@@ -4,9 +4,9 @@ using System.Linq;
 
 namespace QuerySamples
 {
-    public static class LazyEx
+    public static class LazyEvalEx
     {
-        public static IEnumerable<TResult> Lazy<TSource, TResult>(
+        public static IEnumerable<TResult> LazyEval<TSource, TResult>(
             this IEnumerable<TSource> data,
             Func<IEnumerable<TSource>, TResult> func
         )

@@ -2611,7 +2611,7 @@ namespace SampleQueries {
             - liniowe, zgodne semantycznie
             - BetterMax jest własnym rozszerzeniem na Max
 
-            products.Lazy(p => p.Max(p2 => p2.UnitPrice))
+            products.LazyEval(p => p.Max(p2 => p2.UnitPrice))
             - liniowe, zgodne semantycznie
             - idea zastosowana w BetterMax zastosowana w sposób generyczny
             
@@ -2630,7 +2630,7 @@ namespace SampleQueries {
             Func<IList<Product>, Func<IEnumerable<string>>> method4 = (products) => () =>
                 products.Join(
                         // Jedno elementowa druga kolekcja (b), z która będzie robionę złączenie.
-                        products.Lazy(p => p.Max(p2 => p2.UnitPrice)), // [XYZABC]
+                        products.LazyEval(p => p.Max(p2 => p2.UnitPrice)), // [XYZABC]
 
                         // Klucz złączenia. Jeżeli przyjmie tą samą wartość, to złaczenie będzie dokonane.
                         // Jako iż chce zrobić cross-join zwracam "magic number" 10, lecz może być to dowolna inna taka sama wartość.
@@ -2655,7 +2655,7 @@ namespace SampleQueries {
             // - Dokumentacja zawiera bardzo podobny przykład wykonania cross-joina przy użyciu kontrukcji "multiple from".
             // - Przykład nazywa się: "Using Multiple from Clauses to Perform Joins".
             Func<IList<Product>, Func<IEnumerable<string>>> method5 = (products) => () =>
-                from max in products.Lazy(p => p.Max(p2 => p2.UnitPrice)) // [XYZABC]
+                from max in products.LazyEval(p => p.Max(p2 => p2.UnitPrice)) // [XYZABC]
                 from prod in products.Where(p => p.UnitPrice == max)
                 select prod.ProductName;
 
@@ -2667,11 +2667,19 @@ namespace SampleQueries {
             // Próba udana.
             // - Próba jest zapytaniem "method5" zapisanym bez query expression.
             Func<IList<Product>, Func<IEnumerable<string>>> method6 = (products) => () =>
-                products.Lazy(p => p.Max(p2 => p2.UnitPrice)) // [XYZABC]
+                products.LazyEval(p => p.Max(p2 => p2.UnitPrice)) // [XYZABC]
                     .SelectMany(
                         max => products.Where(p => p.UnitPrice == max).Select(p => p.ProductName)
                     );
-                   
+
+            // Czas: 0,4212ms
+            // - Prawdziwe przetłumaczenie "method5" na extension methods syntax.
+            Func<IList<Product>, Func<IEnumerable<string>>> method7 = (products) => () =>
+                products.LazyEval(p => p.Max(p2 => p2.UnitPrice))  // [XYZABC]
+                    .SelectMany(
+                        max => products.Where(p => p.UnitPrice == max), (max, prod) => prod.ProductName
+                    );
+
 
             // ----------------------------------------------------------------------------------------
             //                                      BENCHMARK
@@ -2680,29 +2688,36 @@ namespace SampleQueries {
             // Czasy zapisano przyy każdej z metod.
             Benchmark.ExMulti(GetProductList(),
                 wMethod0, wMethod1, wMethod2, wMethod3,
-                method4, method5, method6);
+                method4, method5, method6, method7);
 
-            Func<IList<Product>, Func<IEnumerable<string>>>[] ownMethods =
+            Func<IList<Product>, Func<IEnumerable<string>>>[] baseAndOwnMethods =
             {
-                method4, method5, method6,
+                wMethod0, method4, method5, method6, method7
             };
 
             // Dla pustej listy produtków pusty wynik.
             // - upewnienie się, że nie rzuca wyjątku.
-            foreach (var ownMethod in ownMethods)
+            foreach (var method in baseAndOwnMethods)
             {
-                var emptyProductList = new List<Product>();
-                var emptyResult = ownMethod(emptyProductList)().ToList();
+                try
+                {
+                    var emptyProductList = new List<Product>();
+                    var emptyResult = method(emptyProductList)().ToList();
 
-                Console.WriteLine(emptyResult.Count);
+                    Console.WriteLine(emptyResult.Count);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("ERR");
+                }
             }
 
             // Podąża za zmiany na liście produktów.
             // - nie występuje żadna materializajca.
-            foreach (var ownMethod in ownMethods)
+            foreach (var method in baseAndOwnMethods)
             {
                 var productList = new List<Product>(GetProductList());
-                IEnumerable<string> enumerableX = ownMethod(productList)();
+                IEnumerable<string> enumerableX = method(productList)();
 
                 var before = enumerableX.ToList();
                 productList.Add(new Product(9999, "XXXX", "XXXX", 999, 9999)); // uzupełniona kolekcja
